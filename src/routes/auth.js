@@ -13,7 +13,7 @@ const safeNext = (n) => (typeof n === 'string' && /^\/(?!\/)/.test(n) ? n : '/')
 
 router.get('/login', (req, res) => {
   if (req.user) return res.redirect('/');
-  res.render('login', { title: 'Login', error: null, next: req.query.next || '' });
+  res.render('login', { title: 'Login', error: res.locals.flash?.msg || null, next: req.query.next || '' });
 });
 
 router.post('/login', (req, res) => {

@@ -71,7 +71,9 @@ function createApp(engine) {
 
   app.use(session({
     store: new SqliteStore(), secret: sessionSecret(), resave: false, saveUninitialized: false, name: 'ipc.sid',
-    cookie: { httpOnly: true, sameSite: 'lax', secure: cfg.secureCookies, maxAge: 7 * 86400000 },
+    // 'auto': Secure flag only on HTTPS requests (nginx sends X-Forwarded-Proto). A fixed `secure: true`
+    // makes browsers drop the cookie on plain http://IP access, and every login then fails the CSRF check.
+    cookie: { httpOnly: true, sameSite: 'lax', secure: cfg.secureCookies ? 'auto' : false, maxAge: 7 * 86400000 },
   }));
 
   // Locals, current user, flash messages, CSRF token.
@@ -128,6 +130,11 @@ function createApp(engine) {
 function csrfCheck(req, res, next) {
   const t = req.body?._csrf || req.get('x-csrf-token');
   if (!t || t !== req.session.csrf) {
+    if (req.path === '/login' || req.path.startsWith('/install')) {
+      // Usually the browser didn't keep the session cookie: show the form again instead of a dead end.
+      req.flash('error', 'Your session expired or cookies are blocked. Please try again (and make sure cookies are allowed for this site).');
+      return res.redirect(req.path === '/login' ? '/login' : '/install');
+    }
     return res.status(403).render('error', { title: 'Session expired', message: 'Your session expired. Go back, refresh the page and try again.' });
   }
   next();
