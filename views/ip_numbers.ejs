@@ -8,7 +8,7 @@
     <tbody><% rows.forEach(t => { %>
       <tr><td><b><%= t.number %></b> <%- t.is_main ? '<span class="badge b-green">Main</span>' : '' %><span class="sub"><%= t.username && t.username !== t.number ? 'user ' + t.username : '' %></span></td>
         <td><span class="secret" data-secret="<%= t.password || '' %>"><span class="val">••••••••••••</span><button class="ib k" data-reveal title="Show"><i class="bi bi-eye"></i></button></span></td>
-        <td class="mono small"><%= t.sip_server %></td><td><%= t.port %>/<%= t.transport.toUpperCase() %></td>
+        <td class="mono small"><%= t.sip_server %></td><td><%= t.port %><% if (t.transport !== 'udp') { %> <span class="sub">TCP</span><% } %></td>
         <td class="small"><%= t.max_concurrent %> calls · <%= t.cps %>/s</td><td><%= t.live %></td>
         <td class="small"><%= t.last_sync ? u.fmtDate(t.last_sync) : 'never' %><span class="sub"><%= t.last_sync ? u.timeAgo(t.last_sync) : '' %></span></td>
         <td><%- t.enabled ? u.badge(t.status) : u.badge('cancelled', 'Disabled') %><% if (t.enabled && t.status_detail) { %><span class="sub" style="max-width:220px;white-space:normal"><%= t.status_detail %></span><% } %></td>
@@ -24,17 +24,20 @@
 <dialog id="trunk"><form method="post"><%- include('partials/csrf') %>
   <div class="d-head"><h3>Add IP number</h3><button type="button" class="x" data-close>&times;</button></div>
   <div class="d-body">
-    <div class="grid g2" style="gap:0 16px">
-      <div class="field"><label>IP number</label><input type="text" name="number" required placeholder="096XXXXXXXX"></div>
-      <div class="field"><label>SIP username <span class="muted small">(if different)</span></label><input type="text" name="username"></div>
-      <div class="field"><label>SIP password</label><input type="password" name="password" autocomplete="new-password"><div class="hint">Leave blank when editing to keep the current one.</div></div>
-      <div class="field"><label>SIP server</label><input type="text" name="sip_server" required placeholder="sip.operator.com"></div>
-      <div class="field"><label>Port</label><input type="number" name="port" value="5060"></div>
-      <div class="field"><label>Transport</label><select name="transport"><option value="udp">UDP</option><option value="tcp">TCP</option></select></div>
-      <div class="field"><label>Max concurrent calls</label><input type="number" name="max_concurrent" min="1" value="5"></div>
-      <div class="field"><label>Calls per second</label><input type="number" name="cps" min="1" value="1"><div class="hint">Keep low (1–2) to avoid operator rejections.</div></div>
-    </div>
-    <label class="check"><input type="checkbox" name="enabled" value="1" checked> Enabled</label>
+    <div class="field"><label>IP Number <span style="color:var(--red)">*</span></label><input type="text" name="number" required placeholder="096XXXXXXXX"></div>
+    <div class="field"><label>Password <span style="color:var(--red)">*</span></label><input type="password" name="password" autocomplete="new-password"><div class="hint">When editing, leave blank to keep the current password.</div></div>
+    <div class="field"><label>SIP Server <span style="color:var(--red)">*</span></label><input type="text" name="sip_server" required placeholder="sip.icctalk.com"></div>
+    <div class="field"><label>Port <span style="color:var(--red)">*</span></label><input type="number" name="port" value="5060" required></div>
+    <label class="check mb"><input type="checkbox" name="enabled" value="1" checked> Enabled</label>
+    <details class="mt">
+      <summary style="cursor:pointer;color:var(--primary)">Advanced (optional)</summary>
+      <div class="grid g2 mt" style="gap:0 16px">
+        <div class="field"><label>SIP username</label><input type="text" name="username" placeholder="same as IP number"><div class="hint">Only if your operator gave a separate username.</div></div>
+        <div class="field"><label>Transport</label><select name="transport"><option value="udp">UDP (default)</option><option value="tcp">TCP</option></select></div>
+        <div class="field"><label>Max concurrent calls</label><input type="number" name="max_concurrent" min="1" value="5"></div>
+        <div class="field"><label>Calls per second</label><input type="number" name="cps" min="1" value="1"><div class="hint">Keep low (1–2) to avoid operator rejections.</div></div>
+      </div>
+    </details>
   </div>
   <div class="d-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn">Save</button></div>
 </form></dialog>

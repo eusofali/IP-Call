@@ -51,7 +51,16 @@ if [[ $WITH_ASTERISK -eq 1 ]]; then
     [[ -f $ETC/$f ]] && cp -n "$ETC/$f" "$ETC/$f.bak-$ts" || true
     cp "$SRC_DIR/asterisk/$f" "$ETC/$f"
   done
-  sed -i "s/^;external_media_address=.*/;external_media_address=$PUBLIC_IP/; s/^;external_signaling_address=.*/;external_signaling_address=$PUBLIC_IP/" $ETC/pjsip.conf
+  if ip -4 addr show | grep -qw "$PUBLIC_IP"; then
+    sed -i "s/^;external_media_address=.*/;external_media_address=$PUBLIC_IP/; s/^;external_signaling_address=.*/;external_signaling_address=$PUBLIC_IP/" $ETC/pjsip.conf
+  else
+    # VPS is behind 1:1 NAT (public IP not on any interface): advertise the public IP in SIP/SDP,
+    # otherwise the operator sees a private address and registration / audio fail.
+    echo "Public IP $PUBLIC_IP is not on a local interface: enabling NAT settings in pjsip.conf"
+    sed -i "s/^;external_media_address=.*/external_media_address=$PUBLIC_IP/; s/^;external_signaling_address=.*/external_signaling_address=$PUBLIC_IP/" $ETC/pjsip.conf
+    LOCAL_NET="$(ip -4 route get 1.1.1.1 | grep -oP 'src \K[\d.]+' | awk -F. '{print $1"."$2"."$3".0/24"}')"
+    for t in udp tcp; do sed -i "/^\[transport-$t\]/,/^\[/ s#^bind=0.0.0.0:5060#bind=0.0.0.0:5060\nlocal_net=$LOCAL_NET#" $ETC/pjsip.conf; done
+  fi
   touch $ETC/pjsip_ipcall.conf
   # The legacy chan_sip driver (still shipped on some releases) would fight PJSIP for port 5060.
   grep -q '^noload => chan_sip.so' $ETC/modules.conf || sed -i '/^\[modules\]/a noload => chan_sip.so' $ETC/modules.conf
