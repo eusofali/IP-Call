@@ -1,0 +1,30 @@
+{
+  "name": "ip-call-panel",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Voice broadcast / IP call management panel with SIP trunks, IVR, extensions, billing and REST API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "seed": "node scripts/seed-demo.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "bootstrap-icons": "^1.13.2",
+    "dotenv": "^18.0.10",
+    "ejs": "^7.0.2",
+    "express": "^4.22.3",
+    "express-session": "^1.19.0",
+    "multer": "^2.5.0",
+    "ws": "^8.22.2"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^13.1.1"
+  }
+}

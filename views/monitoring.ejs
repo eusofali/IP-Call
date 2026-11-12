@@ -1,0 +1,28 @@
+<%- include('partials/top') %>
+<div class="page-head"><div><h1>Call Monitoring</h1><p>Live calls and trunk health. Refreshes every 3 seconds.</p></div></div>
+<div class="grid g4 mb">
+  <div class="mini m-blue"><div><div class="l">Live calls</div><div class="v" data-live-count>0</div></div><i class="bi bi-broadcast"></i></div>
+  <div class="mini m-teal"><div><div class="l">Queued (running batches)</div><div class="v" data-live-queued>0</div></div><i class="bi bi-hourglass"></i></div>
+  <div class="mini m-green"><div><div class="l">Answer rate (last hour)</div><div class="v"><%= u.pct(hour.success, (hour.success || 0) + (hour.failed || 0)) %></div></div><i class="bi bi-graph-up"></i></div>
+  <div class="mini m-purple"><div><div class="l">Avg. answered call (last hour)</div><div class="v"><%= hour.acd ? u.fmtDuration(hour.acd) : '—' %></div></div><i class="bi bi-stopwatch"></i></div>
+</div>
+<div class="card" data-live>
+  <div class="card-head"><h2><i class="bi bi-headset"></i>Active calls</h2><span class="badge b-green"><span class="dot pulse"></span>Live</span></div>
+  <div class="table-wrap"><table class="t light"><thead><tr><th>#</th><th>Direction</th><th>From</th><th>To</th><th>State</th><th>Duration</th><th class="actions">Hang up</th></tr></thead><tbody></tbody></table></div>
+</div>
+<div class="grid g2">
+  <div class="card"><div class="card-head"><h2><i class="bi bi-hdd-network"></i>Trunks</h2><span class="small muted">Driver: <%= cfg.driver %></span></div>
+    <% if (!trunks.length) { %><div class="empty">No IP numbers.</div><% } else { %>
+    <div class="table-wrap"><table class="t light"><thead><tr><th>Number</th><th>Status</th><th>Capacity</th><th>Last sync</th></tr></thead><tbody>
+      <% trunks.forEach(t => { %><tr><td><%= t.number %></td><td><%- t.enabled ? u.badge(t.status) : u.badge('cancelled', 'Disabled') %></td>
+        <td class="small"><%= t.max_concurrent %> concurrent · <%= t.cps %>/s</td><td class="small"><%= t.last_sync ? u.timeAgo(t.last_sync) : 'never' %></td></tr><% }) %>
+    </tbody></table></div><% } %></div>
+  <div class="card"><div class="card-head"><h2><i class="bi bi-exclamation-diamond"></i>Top failure reasons (24 h)</h2></div>
+    <% if (!reasons.length) { %><div class="empty">No failures in the last 24 hours.</div><% } else { const mx = reasons[0].n; %>
+    <div class="card-body"><% reasons.forEach(r => { %>
+      <div class="mb"><div class="row" style="justify-content:space-between"><span><%= r.reason %></span><b><%= u.fmtNum(r.n) %></b></div>
+      <div class="progress"><div style="width:<%= (r.n / mx * 100).toFixed(0) %>%;background:linear-gradient(90deg,#f87171,#dc2626)"></div></div></div><% }) %>
+      <p class="hint">Many "Network congestion" or "Resource unavailable" failures usually mean the trunk is getting too many calls at once. Lower the concurrency / calls-per-second on the IP number.</p>
+    </div><% } %></div>
+</div>
+<%- include('partials/bottom') %>

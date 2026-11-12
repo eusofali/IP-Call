@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf" content="<%= csrf %>">
+<title><%= title %> · <%= cfg.appName %></title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/public/icons/bootstrap-icons.min.css">
+<link rel="stylesheet" href="/public/css/app.css">
+<script>window.fmtMoney = (n) => <%- JSON.stringify(cfg.currency) %> + ' ' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });</script>
+</head>
+<body>
+<% const nav = (key, href, icon, label) => `<a href="${href}" class="${typeof active !== 'undefined' && active === key ? 'active' : ''}"><i class="bi bi-${icon}"></i>${label}</a>`; %>
+<div class="layout">
+  <aside class="sidebar">
+    <a class="brand" href="/"><span class="logo"><i class="bi bi-telephone-forward"></i></span><span><%= cfg.appName %></span></a>
+    <nav class="nav">
+      <%- nav('dashboard', '/', 'house', 'Dashboard') %>
+      <%- nav('contacts', '/contacts', 'person-vcard', 'Manage Contact') %>
+      <%- nav('groups', '/groups', 'people', 'Manage Group') %>
+      <%- nav('send', '/send-call', 'send', 'Send Voice Call') %>
+      <%- nav('calls', '/calls', 'clock-history', 'Calls History') %>
+      <%- nav('voice', '/voice-files', 'file-earmark-music', 'Manage Voice File') %>
+      <%- nav('extensions', '/extensions', 'telephone', 'Manage Extension') %>
+      <%- nav('ipnumbers', '/ip-numbers', 'hdd-network', 'Manage IP Number') %>
+      <%- nav('batches', '/batches', 'collection', 'All Call Logs') %>
+      <%- nav('monitoring', '/monitoring', 'bar-chart-line', 'Call Monitoring') %>
+      <%- nav('ivr', '/ivr', 'diagram-3', 'IVR Management') %>
+      <%- nav('billing', '/billing', 'receipt', 'Billing') %>
+      <%- nav('developers', '/developers', 'code-slash', 'Developers') %>
+      <%- nav('tickets', '/tickets', 'headset', 'Support Ticket') %>
+      <%- nav('tutorial', '/tutorial', 'play-circle', 'Tutorial') %>
+      <% if (user.role === 'admin') { %>
+        <div class="sep">Admin</div>
+        <%- nav('admin-users', '/admin/users', 'person-gear', 'Users & Balance') %>
+        <%- nav('admin-settings', '/admin/settings', 'sliders', 'Settings') %>
+      <% } %>
+    </nav>
+    <% if (cfg.helpline) { %><div class="helpline">HELPLINE: <b><%= cfg.helpline %></b></div><% } %>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-btn" aria-label="Menu"><i class="bi bi-list"></i></button>
+      <a class="wallet <%= user.balance < 1 ? 'low' : '' %>" href="/billing" title="Wallet balance"><i class="bi bi-wallet2"></i><span class="amt"><%= u.fmtMoney(user.balance) %></span></a>
+      <details class="userbox">
+        <summary><span class="avatar"><%= (user.name || user.username).trim().charAt(0) %></span><span class="name"><%= user.username %></span><i class="bi bi-chevron-down"></i></summary>
+        <div class="menu">
+          <a href="/profile"><i class="bi bi-person"></i>Profile</a>
+          <a href="/developers"><i class="bi bi-key"></i>API key</a>
+          <form method="post" action="/logout"><input type="hidden" name="_csrf" value="<%= csrf %>"><button><i class="bi bi-box-arrow-right"></i><%= locals.impersonating ? 'Back to admin' : 'Logout' %></button></form>
+        </div>
+      </details>
+    </header>
+    <% if (locals.impersonating) { %><div class="impersonating"><i class="bi bi-incognito"></i>You are viewing the panel as <b><%= user.username %></b>. Use "Back to admin" in the user menu to return.</div><% } %>
+    <main class="content">
+      <% if (flash) { %><div class="alert <%= flash.type %>"><i class="bi bi-<%= flash.type === 'success' ? 'check-circle' : 'exclamation-triangle' %>"></i><div><%= flash.msg %></div></div><% } %>

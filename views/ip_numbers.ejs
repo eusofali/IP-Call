@@ -1,0 +1,41 @@
+<%- include('partials/top') %>
+<div class="page-head"><div><h1>Manage IP Numbers</h1><p>Your SIP trunks (IP telephone numbers from your operator). Calls are placed through these.</p></div>
+  <button class="btn outline" data-dialog="trunk" data-action="/ip-numbers" data-title="Add IP number" data-fill='{"number":"","username":"","password":"","sip_server":"","port":5060,"transport":"udp","max_concurrent":5,"cps":1,"enabled":1}'><i class="bi bi-plus-lg"></i>Add New</button></div>
+<div class="card">
+  <% if (!rows.length) { %><div class="empty"><i class="bi bi-hdd-network"></i>No IP numbers yet. Add the SIP account details your operator gave you.</div><% } else { %>
+  <div class="table-wrap"><table class="t">
+    <thead><tr><th>IP number</th><th>Password</th><th>SIP server</th><th>Port</th><th>Capacity</th><th>Live</th><th>Last sync</th><th>Status</th><th class="actions">Action</th></tr></thead>
+    <tbody><% rows.forEach(t => { %>
+      <tr><td><b><%= t.number %></b> <%- t.is_main ? '<span class="badge b-green">Main</span>' : '' %><span class="sub"><%= t.username && t.username !== t.number ? 'user ' + t.username : '' %></span></td>
+        <td><span class="secret" data-secret="<%= t.password || '' %>"><span class="val">••••••••••••</span><button class="ib k" data-reveal title="Show"><i class="bi bi-eye"></i></button></span></td>
+        <td class="mono small"><%= t.sip_server %></td><td><%= t.port %>/<%= t.transport.toUpperCase() %></td>
+        <td class="small"><%= t.max_concurrent %> calls · <%= t.cps %>/s</td><td><%= t.live %></td>
+        <td class="small"><%= t.last_sync ? u.fmtDate(t.last_sync) : 'never' %><span class="sub"><%= t.last_sync ? u.timeAgo(t.last_sync) : '' %></span></td>
+        <td><%- t.enabled ? u.badge(t.status) : u.badge('cancelled', 'Disabled') %></td>
+        <td class="actions"><span class="icon-btns">
+          <% if (!t.is_main) { %><form class="inline" method="post" action="/ip-numbers/<%= t.id %>/main"><%- include('partials/csrf') %><button class="ib g" title="Make main"><i class="bi bi-star"></i></button></form><% } %>
+          <button class="ib p" title="Edit" data-dialog="trunk" data-title="Edit <%= t.number %>" data-action="/ip-numbers/<%= t.id %>/update" data-fill='<%= JSON.stringify({ number: t.number, username: t.username || "", password: "", sip_server: t.sip_server, port: t.port, transport: t.transport, max_concurrent: t.max_concurrent, cps: t.cps, enabled: t.enabled }) %>'><i class="bi bi-pencil"></i></button>
+          <form class="inline" method="post" action="/ip-numbers/<%= t.id %>/delete" data-confirm="Delete <%= t.number %>?"><%- include('partials/csrf') %><button class="ib r" title="Delete"><i class="bi bi-trash"></i></button></form>
+        </span></td></tr>
+    <% }) %></tbody></table></div><% } %>
+</div>
+<p class="hint">Status is refreshed from <%= cfg.driver === 'asterisk' ? 'Asterisk every 30 seconds' : 'the simulator (no real registration)' %>. Balance on the operator side is not visible here — your <a href="/billing">wallet balance</a> is what calls are charged to.</p>
+
+<dialog id="trunk"><form method="post"><%- include('partials/csrf') %>
+  <div class="d-head"><h3>Add IP number</h3><button type="button" class="x" data-close>&times;</button></div>
+  <div class="d-body">
+    <div class="grid g2" style="gap:0 16px">
+      <div class="field"><label>IP number</label><input type="text" name="number" required placeholder="096XXXXXXXX"></div>
+      <div class="field"><label>SIP username <span class="muted small">(if different)</span></label><input type="text" name="username"></div>
+      <div class="field"><label>SIP password</label><input type="password" name="password" autocomplete="new-password"><div class="hint">Leave blank when editing to keep the current one.</div></div>
+      <div class="field"><label>SIP server</label><input type="text" name="sip_server" required placeholder="sip.operator.com"></div>
+      <div class="field"><label>Port</label><input type="number" name="port" value="5060"></div>
+      <div class="field"><label>Transport</label><select name="transport"><option value="udp">UDP</option><option value="tcp">TCP</option></select></div>
+      <div class="field"><label>Max concurrent calls</label><input type="number" name="max_concurrent" min="1" value="5"></div>
+      <div class="field"><label>Calls per second</label><input type="number" name="cps" min="1" value="1"><div class="hint">Keep low (1–2) to avoid operator rejections.</div></div>
+    </div>
+    <label class="check"><input type="checkbox" name="enabled" value="1" checked> Enabled</label>
+  </div>
+  <div class="d-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn">Save</button></div>
+</form></dialog>
+<%- include('partials/bottom') %>

@@ -1,0 +1,59 @@
+<%- include('partials/top') %>
+<div class="page-head"><div><h1>Manage Extensions</h1><p>SIP accounts for agents. IVR options can transfer callers to these.</p></div>
+  <button class="btn outline" data-dialog="ext" data-action="/extensions" data-title="New extension" data-fill='{"agent_name":"","forward_to":""}' <%= rows.length >= user.max_extensions ? 'disabled' : '' %>><i class="bi bi-plus-lg"></i>Add New</button></div>
+<div class="card">
+  <div class="card-head"><span>Extensions: <b><%= rows.length %> of <%= user.max_extensions %> used</b></span>
+    <span class="small" style="color:var(--green)"><i class="bi bi-check-circle"></i> <%= Math.max(0, user.max_extensions - rows.length) %> slot(s) remaining</span></div>
+  <% if (!rows.length) { %><div class="empty"><i class="bi bi-telephone-plus"></i>No extensions yet.</div><% } else { %>
+  <div class="table-wrap"><table class="t">
+    <thead><tr><th>SIP number</th><th>Password</th><th>Server / domain</th><th>Agent name</th><th>Status</th><th>Last sync</th><th>Call forwarding</th><th class="actions">Action</th></tr></thead>
+    <tbody><% rows.forEach(x => { %>
+      <tr><td class="mono"><b><%= x.sip_number %></b></td>
+        <td><span class="secret" data-secret="<%= x.password %>"><span class="val">••••••••••••</span><button class="ib k" data-reveal title="Show"><i class="bi bi-eye"></i></button><button class="ib k" data-copy="<%= x.password %>" title="Copy"><i class="bi bi-clipboard"></i></button></span></td>
+        <td class="mono small"><%= sipHost %></td><td><%= x.agent_name || '—' %></td>
+        <td><%- u.badge(x.status) %><% if (cfg.driver !== 'asterisk') { %><span class="sub">needs Asterisk</span><% } %></td>
+        <td class="small"><%= x.last_sync ? u.fmtDate(x.last_sync) : 'never' %></td>
+        <td class="mono small"><%= x.forward_to ? u.fmtPhone(x.forward_to) : '—' %></td>
+        <td class="actions"><span class="icon-btns">
+          <button class="ib p" title="Edit" data-dialog="ext" data-title="Edit extension <%= x.sip_number %>" data-action="/extensions/<%= x.id %>/update" data-fill='<%= JSON.stringify({ agent_name: x.agent_name || "", forward_to: x.forward_to || "" }) %>'><i class="bi bi-pencil"></i></button>
+          <button class="ib k" title="Copy account details" data-copy="<%= `SIP user: ${x.sip_number}\nPassword: ${x.password}\nServer: ${sipHost}\nPort: 5060 (UDP)` %>"><i class="bi bi-files"></i></button>
+          <form class="inline" method="post" action="/extensions/<%= x.id %>/reset-password" data-confirm="Generate a new password? The softphone must be updated."><%- include('partials/csrf') %><button class="ib a" title="Reset password"><i class="bi bi-key"></i></button></form>
+          <form class="inline" method="post" action="/extensions/<%= x.id %>/delete" data-confirm="Delete extension <%= x.sip_number %>?"><%- include('partials/csrf') %><button class="ib r" title="Delete"><i class="bi bi-trash"></i></button></form>
+        </span></td></tr>
+    <% }) %></tbody></table></div><% } %>
+</div>
+
+<div class="card">
+  <div class="card-head"><h2>Download Softphone</h2></div>
+  <div class="card-body">
+    <div class="tabs" data-target="#apps"><button class="on" data-tab="all"><i class="bi bi-grid"></i> All</button><button data-tab="android"><i class="bi bi-android2"></i> Android</button><button data-tab="ios"><i class="bi bi-apple"></i> iOS</button><button data-tab="desktop"><i class="bi bi-display"></i> Windows</button><button data-tab="mac"><i class="bi bi-apple"></i> macOS</button></div>
+    <div class="apps" id="apps">
+      <% [
+        ['android','Zoiper','https://play.google.com/store/apps/details?id=com.zoiper.android.app','#f97316'],
+        ['android','Linphone','https://play.google.com/store/apps/details?id=org.linphone','#0ea5e9'],
+        ['android','Groundwire','https://play.google.com/store/apps/details?id=cz.acrobits.softphone.aliengroundwire','#a855f7'],
+        ['ios','Zoiper','https://apps.apple.com/app/zoiper-lite-voip-soft-phone/id438949960','#f97316'],
+        ['ios','Linphone','https://apps.apple.com/app/linphone/id360065638','#0ea5e9'],
+        ['desktop','MicroSIP','https://www.microsip.org/downloads','#22c55e'],
+        ['desktop','Zoiper','https://www.zoiper.com/en/voip-softphone/download/current','#f97316'],
+        ['mac','Zoiper','https://www.zoiper.com/en/voip-softphone/download/current','#f97316'],
+        ['mac','Linphone','https://www.linphone.org/technical-corner/linphone','#0ea5e9'],
+      ].forEach(([k, n, href, col]) => { %>
+        <div class="app" data-kind="<%= k %>"><div class="ai" style="background:<%= col %>"><i class="bi bi-telephone"></i></div>
+          <span class="badge b-indigo small"><%= { android: 'Android', ios: 'iOS', desktop: 'Windows', mac: 'macOS' }[k] %></span><b><%= n %></b>
+          <a class="btn sm block" href="<%= href %>" target="_blank" rel="noopener"><i class="bi bi-download"></i>Download</a></div>
+      <% }) %>
+    </div>
+  </div>
+</div>
+
+<dialog id="ext"><form method="post"><%- include('partials/csrf') %>
+  <div class="d-head"><h3>New extension</h3><button type="button" class="x" data-close>&times;</button></div>
+  <div class="d-body">
+    <div class="field"><label>Agent name</label><input type="text" name="agent_name" placeholder="e.g. Rahim (Sales)"></div>
+    <div class="field"><label>Forward calls to (optional)</label><input type="tel" name="forward_to" placeholder="01XXXXXXXXX"><div class="hint">Mobile to ring when this agent is offline.</div></div>
+    <p class="hint">The SIP number and a strong password are generated automatically.</p>
+  </div>
+  <div class="d-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn">Save</button></div>
+</form></dialog>
+<%- include('partials/bottom') %>

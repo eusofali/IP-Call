@@ -1,0 +1,86 @@
+<%- include('partials/auth_head') %>
+<div class="auth"><div class="box wide">
+  <div class="brand"><span class="logo"><i class="bi bi-gear-wide-connected" style="color:#fff"></i></span><span>Setup wizard</span></div>
+  <div class="steps"><% for (let i = 1; i <= 4; i++) { %><div class="<%= i <= step ? 'on' : '' %>"></div><% } %></div>
+  <% if (error) { %><div class="alert error"><i class="bi bi-exclamation-triangle"></i><%= error %></div><% } %>
+
+  <% if (step === 1) { %>
+    <h2 style="font-size:18px">1. Server check</h2>
+    <p class="muted">Detected: <b><%= checks.hosting %></b></p>
+    <table class="t light">
+      <thead><tr><th>Check</th><th>Value</th><th>Status</th></tr></thead>
+      <tbody>
+      <% checks.list.forEach(c => { %>
+        <tr><td><%= c.name %><% if (!c.ok && c.hint) { %><span class="sub"><%= c.hint %></span><% } %></td>
+            <td class="small mono"><%= c.value %></td>
+            <td><%- c.ok ? u.badge('completed', 'OK') : (c.required ? u.badge('failed', 'Required') : u.badge('paused', 'Optional')) %></td></tr>
+      <% }) %>
+      </tbody>
+    </table>
+    <% const blocked = checks.list.some(c => c.required && !c.ok); %>
+    <form method="post" action="/install/step1" class="mt right"><%- include('partials/csrf') %>
+      <% if (blocked) { %><span class="muted small">Fix the required items and reload.&nbsp;</span><% } %>
+      <button class="btn" <%= blocked ? 'disabled' : '' %>>Continue <i class="bi bi-arrow-right"></i></button>
+    </form>
+
+  <% } else if (step === 2) { const s = st.site || defaults; %>
+    <h2 style="font-size:18px">2. Site settings</h2>
+    <form method="post" action="/install/step2" class="mt"><%- include('partials/csrf') %>
+      <div class="grid g2" style="gap:0 16px">
+        <div class="field"><label>Panel name</label><input type="text" name="appName" value="<%= s.appName %>" required></div>
+        <div class="field"><label>Helpline number</label><input type="text" name="helpline" value="<%= s.helpline %>"></div>
+        <div class="field"><label>Currency symbol</label><input type="text" name="currency" value="<%= s.currency %>"></div>
+        <div class="field"><label>Time zone</label><input type="text" name="tz" value="<%= s.tz %>" list="tzs"><div class="hint">e.g. Asia/Dhaka, Asia/Kolkata, UTC</div>
+          <datalist id="tzs"><option>Asia/Dhaka</option><option>Asia/Kolkata</option><option>Asia/Karachi</option><option>Asia/Dubai</option><option>Europe/London</option><option>UTC</option></datalist></div>
+        <div class="field"><label>Phone number format</label>
+          <select name="country"><option value="BD" <%= s.country === 'BD' ? 'selected' : '' %>>Bangladesh (01XXXXXXXXX → 8801XXXXXXXXX)</option>
+          <option value="INTL" <%= s.country !== 'BD' ? 'selected' : '' %>>International (country code required)</option></select></div>
+        <div class="field"><label>&nbsp;</label><label class="check"><input type="checkbox" name="allowRegister" value="1" <%= s.allowRegister === '1' ? 'checked' : '' %>> Allow customers to self-register</label></div>
+      </div>
+      <div class="row" style="justify-content:space-between"><a href="/install" class="btn ghost">Back</a><button class="btn">Continue <i class="bi bi-arrow-right"></i></button></div>
+    </form>
+
+  <% } else if (step === 3) { %>
+    <h2 style="font-size:18px">3. Admin account</h2>
+    <form method="post" action="/install/step3" class="mt"><%- include('partials/csrf') %>
+      <div class="grid g2" style="gap:0 16px">
+        <div class="field"><label>Your name</label><input type="text" name="name" value="Administrator"></div>
+        <div class="field"><label>Email</label><input type="email" name="email"></div>
+        <div class="field"><label>Username</label><input type="text" name="username" value="admin" required></div>
+        <div></div>
+        <div class="field"><label>Password</label><input type="password" name="password" minlength="8" required></div>
+        <div class="field"><label>Repeat password</label><input type="password" name="password2" minlength="8" required></div>
+      </div>
+      <div class="row" style="justify-content:space-between"><a href="/install?step=2" class="btn ghost">Back</a><button class="btn">Continue <i class="bi bi-arrow-right"></i></button></div>
+    </form>
+
+  <% } else { const d = defaults; %>
+    <h2 style="font-size:18px">4. Telephony</h2>
+    <p class="muted">How should calls be placed? You can change this later in Admin → Settings.</p>
+    <form method="post" action="/install/finish"><%- include('partials/csrf') %>
+      <label class="check card-body" style="border:1px solid var(--line);border-radius:10px;margin-bottom:10px;align-items:flex-start">
+        <input type="radio" name="driver" value="simulator" <%= d.driver !== 'asterisk' ? 'checked' : '' %>>
+        <span><b>Simulator</b> — demo mode, no real calls. Works on any hosting, including cPanel shared hosting.</span></label>
+      <label class="check card-body" style="border:1px solid var(--line);border-radius:10px;align-items:flex-start">
+        <input type="radio" name="driver" value="asterisk" data-toggle="#ari-box" <%= d.driver === 'asterisk' ? 'checked' : '' %>>
+        <span><b>Asterisk (real calls)</b> — connects to an Asterisk server over ARI. Asterisk must run on a VPS
+        (the VPS installer sets it up). On shared hosting, point this at your VPS's ARI URL.</span></label>
+      <div id="ari-box" class="card-body hidden" style="background:#f8f9fd;border-radius:10px;margin-top:10px">
+        <div class="grid g2" style="gap:0 16px">
+          <div class="field"><label>ARI URL</label><input type="url" name="ariUrl" value="<%= d.ari.url %>"><div class="hint">Same server: http://127.0.0.1:8088 · Remote: https://pbx.example.com</div></div>
+          <div class="field"><label>Stasis app name</label><input type="text" name="ariApp" value="<%= d.ari.app %>"></div>
+          <div class="field"><label>ARI username</label><input type="text" name="ariUser" value="<%= d.ari.user %>"></div>
+          <div class="field"><label>ARI password</label><input type="password" name="ariPass" value="<%= d.ari.pass %>"></div>
+          <div class="field"><label>Sounds folder <span class="muted small">(same server only)</span></label><input type="text" name="soundsDir" value="<%= d.asterisk.soundsDir %>" placeholder="/var/lib/asterisk/sounds/ipcall"></div>
+          <div class="field"><label>PJSIP include file <span class="muted small">(same server only)</span></label><input type="text" name="pjsipFile" value="<%= d.asterisk.pjsipFile %>" placeholder="/etc/asterisk/pjsip_ipcall.conf"></div>
+          <div class="field"><label>Public SIP host for extensions</label><input type="text" name="sipHost" value="<%= d.asterisk.sipHost %>" placeholder="your VPS IP or domain"></div>
+        </div>
+        <button type="button" class="btn outline sm" data-test-ari="/install/test-ari"><i class="bi bi-plug"></i>Test connection</button>
+        <div id="ari-result" class="hint"></div>
+      </div>
+      <div class="row mt" style="justify-content:space-between"><a href="/install?step=3" class="btn ghost">Back</a><button class="btn success"><i class="bi bi-check2-circle"></i>Finish setup</button></div>
+    </form>
+  <% } %>
+</div></div>
+<script src="/public/js/app.js"></script>
+</body></html>

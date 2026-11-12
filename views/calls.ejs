@@ -1,0 +1,66 @@
+<%- include('partials/top') %>
+<div class="page-head"><h1>Calls History<% if (batch) { %> <span class="muted">· Batch #<%= batch.id %></span><% } %></h1>
+  <div class="row">
+    <a class="btn ghost" href="/calls/export.csv<%= u.qs(query, { page: null }) %>"><i class="bi bi-download"></i>Export CSV</a>
+    <a class="btn outline" href="/send-call"><i class="bi bi-send"></i>Send Call</a>
+  </div>
+</div>
+<% if (batch) { %>
+<div class="alert <%= batch.status === 'paused' ? 'warn' : 'info' %>"><i class="bi bi-collection"></i>
+  <div class="grow">Batch <b>#<%= batch.id %></b> <%= batch.name ? '· ' + batch.name : '' %> is <%- u.badge(batch.status) %>
+    <%= batch.pause_reason ? '— ' + batch.pause_reason : '' %><%= batch.status === 'scheduled' ? ' — starts ' + u.fmtDate(batch.scheduled_at) : '' %></div>
+  <% if (['running','scheduled'].includes(batch.status)) { %><form class="inline" method="post" action="/batches/<%= batch.id %>/pause"><%- include('partials/csrf') %><button class="btn sm ghost"><i class="bi bi-pause"></i>Pause</button></form><% } %>
+  <% if (batch.status === 'paused') { %><form class="inline" method="post" action="/batches/<%= batch.id %>/resume"><%- include('partials/csrf') %><button class="btn sm success"><i class="bi bi-play"></i>Resume</button></form><% } %>
+  <% if (!['completed','cancelled'].includes(batch.status)) { %><form class="inline" method="post" action="/batches/<%= batch.id %>/cancel" data-confirm="Cancel all remaining calls in this batch?"><%- include('partials/csrf') %><button class="btn sm danger"><i class="bi bi-x"></i>Cancel</button></form><% } %>
+</div>
+<% } %>
+
+<div class="grid g6 mb">
+  <div class="stat c-blue"><div class="ic"><i class="bi bi-telephone"></i></div><div><div class="v"><%= u.fmtNum(stats.total) %></div><div class="l">Total Calls</div></div></div>
+  <div class="stat c-green"><div class="ic"><i class="bi bi-check2-circle"></i></div><div><div class="v"><%= u.fmtNum(stats.success) %></div><div class="l">Success · <%= u.pct(stats.success, stats.total) %></div></div></div>
+  <div class="stat c-navy"><div class="ic"><i class="bi bi-telephone-x"></i></div><div><div class="v"><%= u.fmtNum(stats.failed) %></div><div class="l">Failed · <%= u.pct(stats.failed, stats.total) %></div></div></div>
+  <div class="stat c-teal"><div class="ic"><i class="bi bi-coin"></i></div><div><div class="v"><%= u.fmtMoney(stats.cost) %></div><div class="l">Cost</div></div></div>
+  <div class="stat c-indigo"><div class="ic"><i class="bi bi-stopwatch"></i></div><div><div class="v"><%= u.fmtDuration(stats.duration) %></div><div class="l">Talk Time</div></div></div>
+  <div class="stat c-orange"><div class="ic"><i class="bi bi-clock"></i></div><div><div class="v"><%= stats.success ? u.fmtDuration(stats.duration / stats.success) : '—' %></div><div class="l">Avg. Answered Call</div></div></div>
+</div>
+
+<div class="card"><div class="card-body">
+  <form class="filters" method="get">
+    <div class="field"><label>Mobile</label><input type="search" name="mobile" value="<%= query.mobile || '' %>" placeholder="Search with mobile"></div>
+    <div class="field"><label>Batch</label><select name="batch"><option value="">All</option><% batches.forEach(b => { %><option value="<%= b.id %>" <%= String(query.batch) === String(b.id) ? 'selected' : '' %>>#<%= b.id %> <%= b.name || '' %></option><% }) %></select></div>
+    <div class="field"><label>Status</label><select name="status"><option value="">All</option>
+      <% [['completed','Completed'],['failed','Failed'],['processing','Processing'],['queued','Queued'],['cancelled','Cancelled']].forEach(([v,l]) => { %><option value="<%= v %>" <%= query.status === v ? 'selected' : '' %>><%= l %></option><% }) %></select></div>
+    <div class="field"><label>Direction</label><select name="direction"><option value="">All</option><option value="out" <%= query.direction === 'out' ? 'selected' : '' %>>Outbound</option><option value="in" <%= query.direction === 'in' ? 'selected' : '' %>>Inbound</option></select></div>
+    <div class="field"><label>From date</label><input type="date" name="from" value="<%= query.from || '' %>"></div>
+    <div class="field"><label>To date</label><input type="date" name="to" value="<%= query.to || '' %>"></div>
+    <div class="field"><label>Sender number</label><select name="sender"><option value="">All senders</option><% trunks.forEach(t => { %><option value="<%= t.id %>" <%= String(query.sender) === String(t.id) ? 'selected' : '' %>><%= t.number %></option><% }) %></select></div>
+    <div class="field"><button class="btn block"><i class="bi bi-funnel"></i>Filter</button></div>
+  </form>
+</div></div>
+
+<div class="card">
+  <% if (!rows.length) { %><div class="empty"><i class="bi bi-telephone"></i>No calls match these filters.</div><% } else { %>
+  <div class="table-wrap"><table class="t">
+    <thead><tr><th>SN</th><th>Batch</th><th>Sender</th><th>To</th>
+      <th><a style="color:#fff" href="<%= u.qs(query, { sort: query.sort === 'asc' ? null : 'asc', page: null }) %>">Sent <i class="bi bi-arrow-<%= query.sort === 'asc' ? 'up' : 'down' %>"></i></a></th>
+      <th>Created</th><th>Status</th><th>Duration</th><th>DTMF</th><th>Cost</th><th class="actions">Action</th></tr></thead>
+    <tbody><% rows.forEach((c, i) => { %>
+      <tr>
+        <td><%= pg.offset + i + 1 %></td>
+        <td><%- c.batch_id ? `<a href="/calls?batch=${c.batch_id}">#${c.batch_id}</a>` : '<span class="muted">Inbound</span>' %></td>
+        <td><%= c.direction === 'in' ? u.fmtPhone(c.from_number) : (c.trunk_number || '—') %><span class="sub"><%= c.direction === 'in' ? 'Inbound' : (c.source === 'api' ? 'API' : 'Web') %></span></td>
+        <td class="mono"><%= u.fmtPhone(c.direction === 'in' ? c.to_number : c.to_number) %></td>
+        <td class="nowrap"><%= c.sent_at ? u.fmtDate(c.sent_at) : '—' %><span class="sub"><%= c.sent_at ? u.timeAgo(c.sent_at) : (c.next_attempt_at ? 'retry ' + u.timeAgo(c.next_attempt_at) : 'waiting') %></span></td>
+        <td class="nowrap"><%= u.fmtDate(c.initiated_at) %><span class="sub"><%= u.timeAgo(c.initiated_at) %></span></td>
+        <td><%- u.badge(c.status) %><% if (c.fail_reason) { %> <i class="bi bi-question-circle muted" title="<%= c.fail_reason %>"></i><span class="sub"><%= c.fail_reason %></span><% } %></td>
+        <td class="mono"><%= c.duration != null ? u.fmtDuration(c.duration) : '—' %></td>
+        <td class="mono"><%= c.dtmf || '—' %></td>
+        <td class="nowrap"><%= c.cost ? u.fmtMoney(c.cost) : '—' %></td>
+        <td class="actions"><a class="btn sm outline" href="/calls/<%= c.id %>"><i class="bi bi-eye"></i>View</a></td>
+      </tr>
+    <% }) %></tbody>
+  </table></div>
+  <%- include('partials/pager') %>
+  <% } %>
+</div>
+<%- include('partials/bottom') %>

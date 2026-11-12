@@ -1,0 +1,20 @@
+<%- include('partials/top') %>
+<div class="page-head"><h1>Billing</h1></div>
+<div class="grid g4 mb">
+  <div class="stat c-blue"><div class="ic"><i class="bi bi-wallet2"></i></div><div><div class="v"><%= u.fmtMoney(user.balance) %></div><div class="l">Wallet balance</div></div></div>
+  <div class="stat c-indigo"><div class="ic"><i class="bi bi-tag"></i></div><div><div class="v"><%= u.fmtMoney(user.rate_per_min) %></div><div class="l">Per minute</div></div></div>
+  <div class="stat c-teal"><div class="ic"><i class="bi bi-stopwatch"></i></div><div><div class="v"><%= user.pulse_sec %> s</div><div class="l">Billing pulse (min. charge <%= u.fmtMoney(minCost) %>)</div></div></div>
+  <div class="stat c-orange"><div class="ic"><i class="bi bi-calendar3"></i></div><div><div class="v"><%= u.fmtMoney(month) %></div><div class="l">Spent this month</div></div></div>
+</div>
+<div class="alert info"><i class="bi bi-info-circle"></i><div>Only answered calls are charged. To add balance, contact support<%= cfg.helpline ? ' (' + cfg.helpline + ')' : '' %> or <a href="/tickets">open a ticket</a>.</div></div>
+<div class="card"><div class="card-head"><h2>Transactions</h2></div>
+  <% if (!rows.length) { %><div class="empty"><i class="bi bi-receipt"></i>No transactions yet.</div><% } else { %>
+  <div class="table-wrap"><table class="t light"><thead><tr><th>Date</th><th>Type</th><th>Description</th><th class="right">Amount</th><th class="right">Balance</th></tr></thead><tbody>
+  <% rows.forEach(t => { %><tr><td class="small nowrap"><%= u.fmtDate(t.created_at) %></td>
+    <td><%- u.badge({ topup: 'completed', call: 'queued', refund: 'scheduled', adjust: 'paused' }[t.type], { topup: 'Top-up', call: 'Call', refund: 'Refund', adjust: 'Adjustment' }[t.type]) %></td>
+    <td class="small"><%= t.note || '—' %><% if (t.call_id) { %> · <a href="/calls/<%= t.call_id %>">call #<%= t.call_id %></a><% } %></td>
+    <td class="right nowrap" style="color:<%= t.amount >= 0 ? 'var(--green)' : 'var(--text)' %>"><%= t.amount >= 0 ? '+' : '−' %><%= u.fmtMoney(Math.abs(t.amount)) %></td>
+    <td class="right nowrap"><%= u.fmtMoney(t.balance_after) %></td></tr><% }) %>
+  </tbody></table></div><%- include('partials/pager') %><% } %>
+</div>
+<%- include('partials/bottom') %>

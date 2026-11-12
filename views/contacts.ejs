@@ -1,0 +1,69 @@
+<%- include('partials/top') %>
+<div class="page-head"><h1>Manage Contact</h1>
+  <div class="row">
+    <a class="btn ghost" href="/contacts/export.csv"><i class="bi bi-download"></i>Export CSV</a>
+    <button class="btn outline" data-dialog="import"><i class="bi bi-upload"></i>Import</button>
+    <button class="btn" data-dialog="contact" data-action="/contacts" data-title="Add contact" data-fill='{"name":"","phone":""}'><i class="bi bi-plus-lg"></i>Add Contact</button>
+  </div>
+</div>
+<div class="card"><div class="card-body">
+  <form class="filters" method="get">
+    <div class="field"><label>Search</label><input type="search" name="q" value="<%= q %>" placeholder="Name or mobile"></div>
+    <div class="field"><label>Group</label><select name="group"><option value="">All groups</option><% groups.forEach(g => { %><option value="<%= g.id %>" <%= String(query.group) === String(g.id) ? 'selected' : '' %>><%= g.name %></option><% }) %></select></div>
+    <div class="field"><label class="check" style="min-height:40px"><input type="checkbox" name="banned" value="1" <%= query.banned === '1' ? 'checked' : '' %>> Banned only</label></div>
+    <div class="field"><button class="btn block"><i class="bi bi-funnel"></i>Filter</button></div>
+  </form>
+</div></div>
+
+<form method="post" action="/contacts/bulk" class="card" id="bulk">
+  <%- include('partials/csrf') %>
+  <div class="card-head"><h2><%= u.fmtNum(pg.total) %> contacts</h2>
+    <div class="row">
+      <select name="action" style="width:auto"><option value="">Bulk action…</option><option value="group">Add to group</option><option value="ban">Ban</option><option value="unban">Unban</option><option value="delete">Delete</option></select>
+      <select name="group_id" style="width:auto"><option value="">(group)</option><% groups.forEach(g => { %><option value="<%= g.id %>"><%= g.name %></option><% }) %></select>
+      <button class="btn sm ghost">Apply</button>
+    </div>
+  </div>
+  <% if (!rows.length) { %><div class="empty"><i class="bi bi-person-x"></i>No contacts found.</div><% } else { %>
+  <div class="table-wrap"><table class="t">
+    <thead><tr><th style="width:40px"><input type="checkbox" data-check-all="ids"></th><th>Name</th><th>Mobile</th><th>Groups</th><th>Status</th><th>Added</th><th class="actions">Action</th></tr></thead>
+    <tbody><% rows.forEach(c => { %>
+      <tr><td><input type="checkbox" name="ids" value="<%= c.id %>"></td><td><%= c.name || '—' %></td><td class="mono"><%= u.fmtPhone(c.phone) %></td>
+        <td class="small"><%= c.groups || '—' %></td><td><%- c.banned ? u.badge('failed', 'Banned') : u.badge('active', 'Active') %></td>
+        <td class="small"><%= u.fmtDate(c.created_at).slice(0, 10) %></td>
+        <td class="actions"><span class="icon-btns">
+          <a class="ib b" title="Call now" href="/send-call?to=<%= c.phone %>"><i class="bi bi-telephone-outbound"></i></a>
+          <button type="button" class="ib p" title="Edit" data-dialog="contact" data-title="Edit contact" data-action="/contacts/<%= c.id %>/update" data-fill='<%= JSON.stringify({ name: c.name || '', phone: c.phone }) %>'><i class="bi bi-pencil"></i></button>
+          <button type="submit" form="ban<%= c.id %>" class="ib a" title="<%= c.banned ? 'Unban' : 'Ban' %>"><i class="bi bi-<%= c.banned ? 'unlock' : 'slash-circle' %>"></i></button>
+          <button type="submit" form="del<%= c.id %>" class="ib r" title="Delete"><i class="bi bi-trash"></i></button>
+        </span></td></tr>
+    <% }) %></tbody>
+  </table></div>
+  <%- include('partials/pager') %>
+  <% } %>
+</form>
+<% rows.forEach(c => { %>
+  <form id="ban<%= c.id %>" method="post" action="/contacts/<%= c.id %>/ban" class="hidden"><%- include('partials/csrf') %></form>
+  <form id="del<%= c.id %>" method="post" action="/contacts/<%= c.id %>/delete" class="hidden" data-confirm="Delete this contact?"><%- include('partials/csrf') %></form>
+<% }) %>
+
+<dialog id="contact"><form method="post"><%- include('partials/csrf') %>
+  <div class="d-head"><h3>Add contact</h3><button type="button" class="x" data-close>&times;</button></div>
+  <div class="d-body">
+    <div class="field"><label>Name</label><input type="text" name="name"></div>
+    <div class="field"><label>Mobile number</label><input type="tel" name="phone" required placeholder="01XXXXXXXXX"></div>
+    <div class="field"><label>Add to group (optional)</label><select name="group_id"><option value="">—</option><% groups.forEach(g => { %><option value="<%= g.id %>"><%= g.name %></option><% }) %></select></div>
+  </div>
+  <div class="d-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn">Save</button></div>
+</form></dialog>
+
+<dialog id="import"><form method="post" action="/contacts/import" enctype="multipart/form-data"><%- include('partials/csrf') %>
+  <div class="d-head"><h3>Import contacts</h3><button type="button" class="x" data-close>&times;</button></div>
+  <div class="d-body">
+    <div class="field"><label>CSV / TXT file</label><input type="file" name="file" accept=".csv,.txt"><div class="hint">One per line: <code>phone</code> or <code>name,phone</code>. A header row is ignored.</div></div>
+    <div class="field"><label>…or paste numbers</label><textarea name="numbers" placeholder="01712345678&#10;01812345678"></textarea></div>
+    <div class="field"><label>Add to group</label><select name="group_id"><option value="">—</option><% groups.forEach(g => { %><option value="<%= g.id %>"><%= g.name %></option><% }) %></select></div>
+  </div>
+  <div class="d-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn"><i class="bi bi-upload"></i>Import</button></div>
+</form></dialog>
+<%- include('partials/bottom') %>

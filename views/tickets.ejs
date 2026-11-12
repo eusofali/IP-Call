@@ -1,0 +1,20 @@
+<%- include('partials/top') %>
+<div class="page-head"><h1>Support Ticket</h1><button class="btn" data-dialog="new"><i class="bi bi-plus-lg"></i>New Ticket</button></div>
+<div class="card">
+  <% if (!rows.length) { %><div class="empty"><i class="bi bi-headset"></i>No tickets. Need help? Open one and we'll reply here.</div><% } else { %>
+  <div class="table-wrap"><table class="t light"><thead><tr><th>#</th><th>Subject</th><% if (user.role === 'admin') { %><th>User</th><% } %><th>Priority</th><th>Status</th><th>Updated</th></tr></thead><tbody>
+  <% rows.forEach(t => { %><tr><td>#<%= t.id %></td><td><a href="/tickets/<%= t.id %>"><%= t.subject %></a><span class="sub"><%= t.msgs %> message<%= t.msgs === 1 ? '' : 's' %></span></td>
+    <% if (user.role === 'admin') { %><td><%= t.username %></td><% } %>
+    <td><%- u.badge(t.priority === 'high' ? 'failed' : t.priority === 'low' ? 'queued' : 'scheduled', t.priority) %></td><td><%- u.badge(t.status) %></td><td class="small"><%= u.timeAgo(t.updated_at) %></td></tr><% }) %>
+  </tbody></table></div><% } %>
+</div>
+<dialog id="new"><form method="post" action="/tickets"><%- include('partials/csrf') %>
+  <div class="d-head"><h3>New ticket</h3><button type="button" class="x" data-close>&times;</button></div>
+  <div class="d-body">
+    <div class="field"><label>Subject</label><input type="text" name="subject" required></div>
+    <div class="field"><label>Priority</label><select name="priority"><option value="normal">Normal</option><option value="high">High</option><option value="low">Low</option></select></div>
+    <div class="field"><label>Message</label><textarea name="body" required></textarea></div>
+  </div>
+  <div class="d-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn">Submit</button></div>
+</form></dialog>
+<%- include('partials/bottom') %>

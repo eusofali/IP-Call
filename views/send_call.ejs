@@ -1,0 +1,36 @@
+<%- include('partials/top') %>
+<div class="page-head"><div><h1>Send Voice Call</h1><p>Your recorded message is played to everyone you choose.</p></div></div>
+<% if (error) { %><div class="alert error"><i class="bi bi-exclamation-triangle"></i><%= error %></div><% } %>
+<% if (!trunks.length) { %><div class="alert warn">You have no active IP number. <a href="/ip-numbers">Add one first.</a></div><% } %>
+<% if (!voiceFiles.length) { %><div class="alert warn">You have no voice files. <a href="/voice-files">Upload one first.</a></div><% } %>
+<form method="post" action="/send-call" enctype="multipart/form-data" class="grid g2" style="align-items:start">
+  <%- include('partials/csrf') %>
+  <div class="card"><div class="card-head"><h2><i class="bi bi-people"></i>Recipients</h2></div><div class="card-body">
+    <div class="field"><label>Mobile numbers</label><textarea name="numbers" rows="7" placeholder="01712345678&#10;01812345678, 01912345678"><%= form.numbers || '' %></textarea>
+      <div class="hint">One per line or comma separated. Duplicates and banned numbers are skipped automatically.</div></div>
+    <div class="field"><label>Upload a file (CSV/TXT)</label><input type="file" name="file" accept=".csv,.txt"></div>
+    <% if (groups.length) { %><div class="field"><label>Groups</label>
+      <% groups.forEach(g => { %><label class="check"><input type="checkbox" name="group_ids" value="<%= g.id %>" <%= [].concat(form.group_ids || []).includes(String(g.id)) ? 'checked' : '' %>> <%= g.name %> <span class="muted small">(<%= u.fmtNum(g.members) %>)</span></label><% }) %>
+    </div><% } %>
+  </div></div>
+
+  <div class="card"><div class="card-head"><h2><i class="bi bi-sliders"></i>Message &amp; options</h2></div><div class="card-body">
+    <div class="field"><label>Campaign name (optional)</label><input type="text" name="name" value="<%= form.name || '' %>" placeholder="e.g. November reminder"></div>
+    <div class="field"><label>Voice file</label><select name="voice_file_id"><option value="">— choose —</option>
+      <% voiceFiles.forEach(v => { %><option value="<%= v.id %>" <%= String(form.voice_file_id) === String(v.id) ? 'selected' : '' %>><%= v.name %><%= v.duration ? ` (${u.fmtDuration(v.duration)})` : '' %></option><% }) %></select></div>
+    <div class="field"><label>Interactive menu (optional)</label><select name="ivr_id"><option value="">None — just play the voice file</option>
+      <% ivrs.forEach(i => { %><option value="<%= i.id %>" <%= String(form.ivr_id) === String(i.id) ? 'selected' : '' %>><%= i.name %></option><% }) %></select>
+      <div class="hint">With an IVR, its prompt is played and key presses (DTMF) are recorded.</div></div>
+    <div class="field"><label>Call from (IP number)</label><select name="ip_number_id">
+      <% trunks.forEach(t => { %><option value="<%= t.id %>" <%= String(form.ip_number_id) === String(t.id) ? 'selected' : '' %>><%= t.number %><%= t.is_main ? ' (main)' : '' %></option><% }) %></select></div>
+    <div class="grid g2" style="gap:0 16px">
+      <div class="field"><label>Attempts per number</label><select name="max_attempts"><% [1,2,3].forEach(n => { %><option <%= String(form.max_attempts) === String(n) ? 'selected' : '' %>><%= n %></option><% }) %></select><div class="hint">Retries busy / no-answer calls.</div></div>
+      <div class="field"><label>Retry after (minutes)</label><input type="number" name="retry_delay_min" min="1" max="1440" value="<%= form.retry_delay_min || 5 %>"></div>
+    </div>
+    <div class="field"><label class="check"><input type="checkbox" name="schedule" value="1" data-toggle="#sched" <%= form.schedule ? 'checked' : '' %>> Schedule for later</label></div>
+    <div class="field hidden" id="sched"><label>Start at (<%= cfg.tz %>)</label><input type="datetime-local" name="scheduled_at" value="<%= form.scheduled_at || '' %>"></div>
+    <div class="alert info small"><i class="bi bi-info-circle"></i><div>Rate: <b><%= u.fmtMoney(user.rate_per_min) %>/min</b>, billed per <%= user.pulse_sec %> s pulse. Only answered calls are charged. Balance: <b><%= u.fmtMoney(user.balance) %></b>.</div></div>
+    <button class="btn block" <%= !trunks.length ? 'disabled' : '' %>><i class="bi bi-send"></i>Send Calls</button>
+  </div></div>
+</form>
+<%- include('partials/bottom') %>

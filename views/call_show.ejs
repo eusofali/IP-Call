@@ -1,0 +1,23 @@
+<%- include('partials/top') %>
+<div class="page-head"><h1>Call #<%= c.id %></h1><a class="btn ghost" href="javascript:history.back()"><i class="bi bi-arrow-left"></i>Back</a></div>
+<div class="card"><div class="card-body">
+  <dl class="kv">
+    <dt>Status</dt><dd><%- u.badge(c.status) %> <%= c.fail_reason ? '— ' + c.fail_reason : '' %><%= c.hangup_cause != null ? ` (cause ${c.hangup_cause})` : '' %></dd>
+    <dt>Direction</dt><dd><%= c.direction === 'in' ? 'Inbound' : 'Outbound' %></dd>
+    <dt>From</dt><dd class="mono"><%= u.fmtPhone(c.from_number) %></dd>
+    <dt>To</dt><dd class="mono"><%= u.fmtPhone(c.to_number) %></dd>
+    <% if (c.batch_id) { %><dt>Batch</dt><dd><a href="/calls?batch=<%= c.batch_id %>">#<%= c.batch_id %></a> <%= c.batch_name || '' %></dd><% } %>
+    <% if (c.voice_name) { %><dt>Voice file</dt><dd><%= c.voice_name %> <audio controls preload="none" src="/voice-files/<%= c.voice_id %>/play" style="height:30px;vertical-align:middle"></audio></dd><% } %>
+    <% if (c.ivr_name) { %><dt>IVR</dt><dd><%= c.ivr_name %></dd><% } %>
+    <dt>Keys pressed (DTMF)</dt><dd class="mono"><%= c.dtmf || '—' %></dd>
+    <dt>Duration</dt><dd><%= c.duration != null ? u.fmtDuration(c.duration) : '—' %></dd>
+    <dt>Cost</dt><dd><%= u.fmtMoney(c.cost) %></dd>
+    <dt>Attempts</dt><dd><%= c.attempts %></dd>
+    <dt>Created</dt><dd><%= u.fmtDate(c.initiated_at) %></dd>
+    <dt>Dialed</dt><dd><%= u.fmtDate(c.sent_at) %></dd>
+    <dt>Answered</dt><dd><%= u.fmtDate(c.answered_at) %></dd>
+    <dt>Ended</dt><dd><%= u.fmtDate(c.ended_at) %></dd>
+    <dt>Channel</dt><dd class="mono small"><%= c.channel_id || '—' %></dd>
+  </dl>
+</div></div>
+<%- include('partials/bottom') %>

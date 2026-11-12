@@ -1,0 +1,8 @@
+<%- include('partials/top') %>
+<div class="page-head"><div><h1>#<%= t.id %> · <%= t.subject %></h1><p><%- u.badge(t.status) %> <span class="muted small">opened by <%= t.username %> · <%= u.fmtDate(t.created_at) %></span></p></div>
+  <div class="row"><a class="btn ghost" href="/tickets"><i class="bi bi-arrow-left"></i>All tickets</a>
+  <% if (t.status !== 'closed') { %><form method="post" action="/tickets/<%= t.id %>/close"><%- include('partials/csrf') %><button class="btn ghost"><i class="bi bi-check2"></i>Close</button></form><% } %></div></div>
+<% msgs.forEach(m => { %><div class="msg <%= m.role === 'admin' && m.user_id !== t.user_id ? 'staff' : '' %>"><div class="small muted mb"><b><%= m.name %></b><%= m.role === 'admin' && m.user_id !== t.user_id ? ' (support)' : '' %> · <%= u.fmtDate(m.created_at) %></div><%= m.body %></div><% }) %>
+<form method="post" action="/tickets/<%= t.id %>/reply" class="card"><%- include('partials/csrf') %>
+  <div class="card-body"><div class="field"><label>Reply</label><textarea name="body" required></textarea></div><button class="btn"><i class="bi bi-reply"></i>Send reply</button></div></form>
+<%- include('partials/bottom') %>

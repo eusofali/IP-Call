@@ -1,0 +1,6 @@
+<% if (locals.user) { %><%- include('partials/top') %>
+<div class="card"><div class="empty"><i class="bi bi-exclamation-octagon"></i><h2 style="font-size:18px;color:var(--text)"><%= title %></h2><p><%= message %></p><a class="btn" href="/">Go to dashboard</a></div></div>
+<%- include('partials/bottom') %>
+<% } else { %><%- include('partials/auth_head') %>
+<div class="auth"><div class="box center"><h2 style="font-size:18px"><%= title %></h2><p class="muted"><%= message %></p><a class="btn" href="/">Home</a></div></div></body></html>
+<% } %>

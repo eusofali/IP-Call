@@ -1,0 +1,56 @@
+<%- include('partials/top') %>
+<div class="page-head"><h1>Dashboard</h1><a class="btn outline" href="/send-call"><i class="bi bi-send"></i>Send Call</a></div>
+
+<% if (notice) { %><div class="notice-bar"><b><i class="bi bi-megaphone"></i>Notice</b><div class="marquee"><span><%= notice %></span></div></div><% } %>
+<% if (!trunks.length) { %><div class="alert warn"><i class="bi bi-info-circle"></i><div>No IP number yet. <a href="/ip-numbers">Add your SIP trunk</a> before sending calls.</div></div><% } %>
+<% if (user.balance <= 0) { %><div class="alert warn"><i class="bi bi-wallet2"></i><div>Your wallet balance is <%= u.fmtMoney(user.balance) %>. Calls cannot be placed until it is topped up.</div></div><% } %>
+
+<div class="grid g4 mb">
+  <div class="stat c-blue"><div class="ic"><i class="bi bi-telephone-outbound"></i></div><div><div class="v"><%= u.fmtNum(totals.total) %></div><div class="l">Total Voice Calls Sent</div></div><a class="more" href="/calls">View all</a></div>
+  <div class="stat c-green"><div class="ic"><i class="bi bi-check2-circle"></i></div><div><div class="v"><%= u.fmtNum(totals.success) %></div><div class="l">Successful Calls · <%= u.pct(totals.success, totals.total) %></div></div><a class="more" href="/calls?status=completed">View all</a></div>
+  <div class="stat c-teal"><div class="ic"><i class="bi bi-hourglass-split"></i></div><div><div class="v"><%= u.fmtNum(totals.processing) %></div><div class="l">Processing Calls</div></div><a class="more" href="/calls?status=processing">View all</a></div>
+  <div class="stat c-navy"><div class="ic"><i class="bi bi-telephone-x"></i></div><div><div class="v"><%= u.fmtNum(totals.failed) %></div><div class="l">Failed Calls · <%= u.pct(totals.failed, totals.total) %></div></div><a class="more" href="/calls?status=failed">View all</a></div>
+</div>
+
+<div class="grid g4 mb">
+  <div class="mini m-blue"><div><div class="l">Active Calls (live)</div><div class="v" data-live-count>0</div></div><i class="bi bi-headset"></i></div>
+  <div class="mini m-green"><div><div class="l">Successful Calls (today)</div><div class="v"><%= u.fmtNum(today.success) %></div></div><i class="bi bi-telephone"></i></div>
+  <div class="mini m-teal"><div><div class="l">Success Rate (today)</div><div class="v"><%= u.pct(today.success, (today.success || 0) + (today.failed || 0)) %></div></div><i class="bi bi-percent"></i></div>
+  <div class="mini m-purple"><div><div class="l">Spent Today</div><div class="v"><%= u.fmtMoney(today.cost) %></div></div><i class="bi bi-cash-coin"></i></div>
+</div>
+
+<div class="grid g4 mb">
+  <a class="card tile" href="/contacts" style="color:var(--green)"><div class="ic"><i class="bi bi-person-lines-fill"></i></div><div><div class="v"><%= u.fmtNum(counts.contacts) %></div><div class="l">Total Contacts</div></div></a>
+  <a class="card tile" href="/contacts?banned=1" style="color:var(--red)"><div class="ic"><i class="bi bi-slash-circle"></i></div><div><div class="v"><%= u.fmtNum(counts.bannedContacts) %></div><div class="l">Banned Contacts</div></div></a>
+  <a class="card tile" href="/groups" style="color:var(--blue)"><div class="ic"><i class="bi bi-people"></i></div><div><div class="v"><%= u.fmtNum(counts.groups) %></div><div class="l">Total Groups</div></div></a>
+  <a class="card tile" href="/groups" style="color:var(--red)"><div class="ic"><i class="bi bi-slash-circle"></i></div><div><div class="v"><%= u.fmtNum(counts.bannedGroups) %></div><div class="l">Banned Groups</div></div></a>
+</div>
+
+<div class="card" data-live>
+  <div class="card-head"><h2><i class="bi bi-headset"></i>Active Calls <span class="badge b-indigo" data-live-count>0</span></h2>
+    <span class="small"><span class="badge b-green"><span class="dot pulse"></span>Live</span> <span class="muted">· queued: <b data-live-queued>0</b></span></span></div>
+  <div class="table-wrap"><table class="t light"><thead><tr><th>#</th><th>Direction</th><th>From</th><th>To</th><th>State</th><th>Duration</th><th class="actions"></th></tr></thead><tbody></tbody></table></div>
+</div>
+
+<div class="grid g2">
+  <div class="card">
+    <div class="card-head"><h2><i class="bi bi-bar-chart"></i>Last 14 days</h2><div class="legend"><span><i style="background:#22c55e"></i>Success</span><span><i style="background:#f87171"></i>Failed</span></div></div>
+    <div class="card-body">
+      <% const max = Math.max(1, ...days.map(d => d.s + d.f)); %>
+      <div class="bars"><% days.forEach(d => { %>
+        <div class="bar" title="<%= d.d %>: <%= d.s %> success, <%= d.f %> failed">
+          <div class="f" style="height:<%= (d.f / max * 100).toFixed(1) %>%"></div><div class="s" style="height:<%= (d.s / max * 100).toFixed(1) %>%"></div><div class="lbl"><%= d.d %></div>
+        </div><% }) %></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2><i class="bi bi-collection"></i>Recent batches</h2><a href="/batches" class="small">All call logs</a></div>
+    <% if (!batches.length) { %><div class="empty"><i class="bi bi-inbox"></i>No batches yet. <a href="/send-call">Send your first call</a></div>
+    <% } else { %><div class="table-wrap"><table class="t light"><thead><tr><th>Batch</th><th>Status</th><th>Progress</th><th>Created</th></tr></thead><tbody>
+      <% batches.forEach(b => { %><tr><td><a href="/calls?batch=<%= b.id %>">#<%= b.id %></a> <span class="sub"><%= b.name || '' %></span></td><td><%- u.badge(b.status) %></td>
+        <td><div class="progress"><div style="width:<%= b.total ? (b.done / b.total * 100).toFixed(0) : 0 %>%"></div></div><span class="sub"><%= u.fmtNum(b.done) %> / <%= u.fmtNum(b.total) %></span></td>
+        <td class="small"><%= u.timeAgo(b.created_at) %></td></tr><% }) %>
+    </tbody></table></div><% } %>
+  </div>
+</div>
+<%- include('partials/bottom') %>

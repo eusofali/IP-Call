@@ -1,0 +1,33 @@
+<%- include('partials/top') %>
+<div class="page-head"><h1>Manage Voice File</h1><button class="btn" data-dialog="upload"><i class="bi bi-upload"></i>Upload Voice</button></div>
+<div class="card">
+  <% if (!rows.length) { %><div class="empty"><i class="bi bi-file-earmark-music"></i>No voice files yet. Upload the message you want people to hear.</div><% } else { %>
+  <div class="table-wrap"><table class="t">
+    <thead><tr><th>SN</th><th>Name</th><th>Preview</th><th>Length</th><th>Size</th><% if (cfg.driver === 'asterisk') { %><th>Asterisk</th><% } %><th>Used in</th><th>Uploaded</th><th class="actions">Action</th></tr></thead>
+    <tbody><% rows.forEach((v, i) => { %>
+      <tr><td><%= i + 1 %></td><td><%= v.name %><span class="sub">ID <%= v.id %> · <%= v.original_name %></span></td>
+        <td><audio controls preload="none" src="/voice-files/<%= v.id %>/play" style="height:34px;max-width:240px"></audio></td>
+        <td><%= v.duration != null ? u.fmtDuration(v.duration) : '—' %></td><td class="small"><%= (v.size / 1024).toFixed(0) %> KB</td>
+        <% if (cfg.driver === 'asterisk') { %><td><%- v.asterisk_ready ? u.badge('completed', 'Ready') : u.badge('failed', 'Not converted') %></td><% } %>
+        <td class="small"><%= v.used %> batch<%= v.used === 1 ? '' : 'es' %></td><td class="small"><%= u.fmtDate(v.created_at) %></td>
+        <td class="actions"><span class="icon-btns">
+          <button class="ib p" title="Rename" data-dialog="rename" data-action="/voice-files/<%= v.id %>/rename" data-fill='<%= JSON.stringify({ name: v.name }) %>'><i class="bi bi-pencil"></i></button>
+          <form class="inline" method="post" action="/voice-files/<%= v.id %>/delete" data-confirm="Delete this voice file?"><%- include('partials/csrf') %><button class="ib r" title="Delete"><i class="bi bi-trash"></i></button></form>
+        </span></td></tr>
+    <% }) %></tbody></table></div><% } %>
+</div>
+<dialog id="upload"><form method="post" action="/voice-files" enctype="multipart/form-data"><%- include('partials/csrf') %>
+  <div class="d-head"><h3>Upload voice file</h3><button type="button" class="x" data-close>&times;</button></div>
+  <div class="d-body">
+    <div class="field"><label>Name</label><input type="text" name="name" placeholder="e.g. Eid offer"></div>
+    <div class="field"><label>Audio file</label><input type="file" name="file" accept=".mp3,.wav,.ogg,.m4a,.gsm,.aac" required>
+      <div class="hint">MP3/WAV up to 20 MB. Best quality on phone lines: WAV 8 kHz mono. Keep messages short (15–45 s).</div></div>
+  </div>
+  <div class="d-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn"><i class="bi bi-upload"></i>Upload</button></div>
+</form></dialog>
+<dialog id="rename"><form method="post"><%- include('partials/csrf') %>
+  <div class="d-head"><h3>Rename</h3><button type="button" class="x" data-close>&times;</button></div>
+  <div class="d-body"><div class="field"><label>Name</label><input type="text" name="name" required></div></div>
+  <div class="d-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn">Save</button></div>
+</form></dialog>
+<%- include('partials/bottom') %>

@@ -1,0 +1,24 @@
+<%- include('partials/top') %>
+<div class="page-head"><div><h1>IVR Management</h1><p>Control your calls. Customize what callers hear when they call your IP number.</p></div></div>
+<% const fileOpts = (sel) => voiceFiles.map(v => `<option value="${v.id}" ${String(sel) === String(v.id) ? 'selected' : ''}>${u.esc(v.name)}</option>`).join(''); %>
+<form method="post" action="/ivr/settings"><%- include('partials/csrf') %>
+  <div class="card"><div class="card-head"><h2>Welcome Voice</h2><label class="switch"><input type="checkbox" name="welcome_enabled" value="1" data-toggle="#w-body" <%= settings.welcome_enabled ? 'checked' : '' %>><span></span></label></div>
+    <div class="card-body row" id="w-body"><span class="grow"><i class="bi bi-soundwave"></i> Greeting played first on every inbound call</span><select name="welcome_file_id" style="max-width:280px"><option value="">— choose —</option><%- fileOpts(settings.welcome_file_id) %></select></div></div>
+  <div class="card"><div class="card-head"><h2>Music on Hold</h2><label class="switch"><input type="checkbox" name="moh_enabled" value="1" data-toggle="#m-body" <%= settings.moh_enabled ? 'checked' : '' %>><span></span></label></div>
+    <div class="card-body row" id="m-body"><span class="grow"><i class="bi bi-headphones"></i> Played while a caller is being transferred to an agent</span><select name="moh_file_id" style="max-width:280px"><option value="">— choose —</option><%- fileOpts(settings.moh_file_id) %></select></div></div>
+  <div class="card"><div class="card-head"><h2>IVR</h2><label class="switch"><input type="checkbox" name="ivr_enabled" value="1" data-toggle="#i-body" <%= settings.ivr_enabled ? 'checked' : '' %>><span></span></label></div>
+    <div class="card-body row" id="i-body"><span class="grow"><i class="bi bi-diagram-3"></i> Menu offered to inbound callers</span><select name="ivr_id" style="max-width:280px"><option value="">— choose —</option>
+      <% ivrs.forEach(i => { %><option value="<%= i.id %>" <%= String(settings.ivr_id) === String(i.id) ? 'selected' : '' %>><%= i.name %></option><% }) %></select></div></div>
+  <div class="right mb"><button class="btn"><i class="bi bi-check2"></i>Save settings</button></div>
+</form>
+
+<div class="card">
+  <div class="card-head"><h2><i class="bi bi-diagram-3"></i>IVR List</h2><a class="btn" href="/ivr/new"><i class="bi bi-plus-lg"></i>Add New</a></div>
+  <% if (!ivrs.length) { %><div class="empty"><i class="bi bi-diagram-3"></i>No IVR menus yet. Example: "Press 1 for sales, 2 to hear offers again".</div><% } else { %>
+  <div class="table-wrap"><table class="t light"><thead><tr><th>SN</th><th>Name</th><th>Prompt</th><th>Options</th><th class="actions">Action</th></tr></thead><tbody>
+    <% ivrs.forEach((i, n) => { %><tr><td><%= n + 1 %></td><td><%= i.name %></td><td class="small"><%= i.prompt_name || '—' %></td><td><%= i.opts %> key<%= i.opts === 1 ? '' : 's' %></td>
+      <td class="actions"><span class="icon-btns"><a class="ib p" title="Edit" href="/ivr/<%= i.id %>"><i class="bi bi-pencil"></i></a>
+      <form class="inline" method="post" action="/ivr/<%= i.id %>/delete" data-confirm="Delete IVR <%= i.name %>?"><%- include('partials/csrf') %><button class="ib r" title="Delete"><i class="bi bi-trash"></i></button></form></span></td></tr><% }) %>
+  </tbody></table></div><% } %>
+</div>
+<%- include('partials/bottom') %>

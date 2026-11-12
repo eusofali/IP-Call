@@ -1,0 +1,32 @@
+<%- include('partials/top') %>
+<div class="page-head"><h1><%= title %></h1><a class="btn ghost" href="/ivr"><i class="bi bi-arrow-left"></i>Back</a></div>
+<% if (error) { %><div class="alert error"><%= error %></div><% } %>
+<% const fileOpts = (sel) => voiceFiles.map(v => `<option value="${v.id}" ${String(sel) === String(v.id) ? 'selected' : ''}>${u.esc(v.name)}</option>`).join('');
+   const extOpts = (sel) => extensions.map(x => `<option value="${x.sip_number}" ${String(sel) === x.sip_number ? 'selected' : ''}>${x.sip_number}${x.agent_name ? ' – ' + u.esc(x.agent_name) : ''}</option>`).join('');
+   const digits = ['1','2','3','4','5','6','7','8','9','0','*','#'];
+   const row = (o = {}) => `<tr>
+     <td><select name="digit" style="width:80px">${digits.map(d => `<option ${o.digit === d ? 'selected' : ''}>${d}</option>`).join('')}</select></td>
+     <td><input type="text" name="label" value="${u.esc(o.label || '')}" placeholder="e.g. Sales"></td>
+     <td><select name="action">${[['play','Play a voice file'],['extension','Transfer to extension'],['forward','Forward to mobile'],['repeat','Repeat menu'],['hangup','Hang up']].map(([v,l]) => `<option value="${v}" ${o.action === v ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
+     <td><select data-for="play" name="target">${fileOpts(o.action === 'play' ? o.target : '')}</select>
+         <select data-for="extension" name="target">${extOpts(o.action === 'extension' ? o.target : '') || '<option value="">No extensions</option>'}</select>
+         <input data-for="forward" name="target" type="tel" placeholder="01XXXXXXXXX" value="${o.action === 'forward' ? u.esc(o.target || '') : ''}">
+         <span data-for="repeat hangup" class="muted small">—</span></td>
+     <td class="actions"><button type="button" class="ib r" data-remove-row title="Remove"><i class="bi bi-x-lg"></i></button></td></tr>`; %>
+<form method="post" action="/ivr/save" id="ivr-form"><%- include('partials/csrf') %>
+  <input type="hidden" name="id" value="<%= ivr.id || '' %>">
+  <div class="card"><div class="card-body grid g2" style="gap:0 16px">
+    <div class="field"><label>IVR name</label><input type="text" name="name" value="<%= ivr.name %>" required></div>
+    <div class="field"><label>Menu prompt (voice file)</label><select name="prompt_file_id" required><option value="">— choose —</option><%- fileOpts(ivr.prompt_file_id) %></select><div class="hint">e.g. "Press 1 to talk to sales, press 2 to hear the offer again".</div></div>
+    <div class="field"><label>Wait for key press (seconds)</label><input type="number" name="timeout_sec" min="3" max="30" value="<%= ivr.timeout_sec %>"></div>
+    <div class="field"><label>Repeat menu if no key is pressed</label><input type="number" name="max_repeats" min="0" max="5" value="<%= ivr.max_repeats %>"></div>
+  </div></div>
+  <div class="card">
+    <div class="card-head"><h2>Key options</h2><button type="button" class="btn sm outline" id="add-opt"><i class="bi bi-plus-lg"></i>Add key</button></div>
+    <div class="table-wrap"><table class="t light"><thead><tr><th>Key</th><th>Label</th><th>Action</th><th>Target</th><th></th></tr></thead>
+      <tbody id="opts"><%- (ivr.options || []).map(row).join('') %></tbody></table></div>
+  </div>
+  <template id="opt-tpl"><%- row({}) %></template>
+  <div class="right"><button class="btn"><i class="bi bi-check2"></i>Save IVR</button></div>
+</form>
+<%- include('partials/bottom') %>

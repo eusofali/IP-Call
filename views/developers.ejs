@@ -1,0 +1,37 @@
+<%- include('partials/top') %>
+<div class="page-head"><div><h1>Developers</h1><p>Send voice calls from your own software with the REST API.</p></div></div>
+<div class="card"><div class="card-head"><h2><i class="bi bi-key"></i>Your API key</h2>
+  <form method="post" action="/developers/regenerate" data-confirm="Generate a new key? The current key stops working immediately."><%- include('partials/csrf') %><button class="btn sm ghost"><i class="bi bi-arrow-repeat"></i>Regenerate</button></form></div>
+  <div class="card-body"><span class="secret" data-secret="<%= user.api_key %>"><span class="val">••••••••••••</span><button class="ib k" data-reveal><i class="bi bi-eye"></i></button><button class="ib k" data-copy="<%= user.api_key %>"><i class="bi bi-clipboard"></i></button></span>
+  <p class="hint">Send it as <code>Authorization: Bearer YOUR_KEY</code>. Keep it secret — anyone with it can spend your balance.</p></div></div>
+
+<div class="card"><div class="card-head"><h2>Endpoints</h2><span class="small muted">Base URL: <code><%= base %>/api/v1</code></span></div>
+<div class="card-body">
+  <table class="t light mb"><thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead><tbody>
+    <tr><td><code>POST</code></td><td><code>/calls</code></td><td>Start a batch. Body: <code>numbers</code> (array or comma string), <code>voice_file_id</code>, optional <code>ivr_id</code>, <code>ip_number_id</code>, <code>name</code>, <code>schedule_at</code> (ISO), <code>max_attempts</code> (1–5)</td></tr>
+    <tr><td><code>GET</code></td><td><code>/batches/{id}</code></td><td>Batch progress: completed / failed / pending / cost</td></tr>
+    <tr><td><code>POST</code></td><td><code>/batches/{id}/pause|resume|cancel</code></td><td>Control a batch</td></tr>
+    <tr><td><code>GET</code></td><td><code>/calls?batch_id=&amp;status=&amp;after_id=&amp;limit=</code></td><td>List calls (newest first)</td></tr>
+    <tr><td><code>GET</code></td><td><code>/calls/{id}</code></td><td>One call: status, reason, DTMF, duration, cost</td></tr>
+    <tr><td><code>GET</code></td><td><code>/voice-files</code>, <code>/ip-numbers</code></td><td>IDs to use in <code>POST /calls</code></td></tr>
+    <tr><td><code>GET</code></td><td><code>/balance</code></td><td>Wallet balance and rate</td></tr>
+  </tbody></table>
+  <h3 style="font-size:14px" class="mb">cURL</h3>
+<pre>curl -X POST <%= base %>/api/v1/calls \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"numbers": ["01712345678", "01812345678"], "voice_file_id": <%= sample.voiceFile %>}'</pre>
+  <h3 style="font-size:14px" class="mb mt">PHP</h3>
+<pre>$ch = curl_init('<%= base %>/api/v1/calls');
+curl_setopt_array($ch, [
+  CURLOPT_POST => true,
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_HTTPHEADER => ['Authorization: Bearer YOUR_API_KEY', 'Content-Type: application/json'],
+  CURLOPT_POSTFIELDS => json_encode(['numbers' => ['01712345678'], 'voice_file_id' => <%= sample.voiceFile %>]),
+]);
+$result = json_decode(curl_exec($ch), true); // ['batch_id' => 12, 'queued' => 1, ...]</pre>
+  <h3 style="font-size:14px" class="mb mt">Response</h3>
+<pre>{ "batch_id": 12, "queued": 2, "invalid": 0, "skipped_banned": 0, "scheduled": false }</pre>
+  <p class="hint">Errors return HTTP 401 (bad key), 422 (validation, e.g. insufficient balance) with <code>{"error": "..."}</code>.</p>
+</div></div>
+<%- include('partials/bottom') %>

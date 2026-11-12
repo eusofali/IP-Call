@@ -1,0 +1,55 @@
+<%- include('partials/top') %>
+<div class="page-head"><h1>Settings</h1></div>
+
+<div class="card"><div class="card-head"><h2><i class="bi bi-alarm"></i>Keep the dialer running (cron)</h2></div><div class="card-body">
+  <% if (welcome) { %><div class="alert info"><i class="bi bi-stars"></i><div><b>One last step on shared hosting:</b> add the cron job below so calls keep going when nobody has the panel open.</div></div><% } %>
+  <p class="muted" style="margin-top:0">On <b>cPanel shared hosting</b> the app is put to sleep when idle, which stops queued calls. In cPanel → <b>Cron Jobs</b>, add this to run <b>every minute</b>. (Not needed on a VPS with systemd/PM2, but harmless.)</p>
+  <div class="row"><code class="grow" style="background:#f3f4f9;padding:10px;border-radius:8px;word-break:break-all">curl -fsS "<%= cronUrl %>" &gt;/dev/null 2&gt;&amp;1</code>
+    <button class="btn sm ghost" data-copy='curl -fsS "<%= cronUrl %>" >/dev/null 2>&1'><i class="bi bi-clipboard"></i></button>
+    <form method="post" action="/admin/settings/cron-key" data-confirm="Generate a new cron key? You'll need to update the cron job."><%- include('partials/csrf') %><button class="btn sm ghost" title="New key"><i class="bi bi-arrow-repeat"></i></button></form></div>
+  <p class="hint">Engine: driver <b><%= engine.driver.name %></b> · <%= engine.active.size %> active call(s) · last tick <%= engine.lastTick ? Math.round((Date.now() - engine.lastTick) / 1000) + 's ago' : 'never' %></p>
+</div></div>
+
+<form method="post" action="/admin/settings/site" class="card"><%- include('partials/csrf') %>
+  <div class="card-head"><h2><i class="bi bi-gear"></i>Site</h2></div>
+  <div class="card-body grid g2" style="gap:0 16px">
+    <div class="field"><label>Panel name</label><input type="text" name="appName" value="<%= cfg.appName %>"></div>
+    <div class="field"><label>Helpline</label><input type="text" name="helpline" value="<%= cfg.helpline %>"></div>
+    <div class="field"><label>Currency symbol</label><input type="text" name="currency" value="<%= cfg.currency %>"></div>
+    <div class="field"><label>Time zone</label><input type="text" name="tz" value="<%= cfg.tz %>"></div>
+    <div class="field"><label>Phone number format</label><select name="country"><option value="BD" <%= cfg.country === 'BD' ? 'selected' : '' %>>Bangladesh</option><option value="INTL" <%= cfg.country !== 'BD' ? 'selected' : '' %>>International</option></select></div>
+    <div class="field"><label>Max simultaneous calls (whole system)</label><input type="number" name="maxConcurrent" min="1" value="<%= cfg.maxConcurrent %>"></div>
+    <div class="field" style="grid-column:1/-1"><label>Dashboard notice (shown to all users)</label><textarea name="notice" rows="2"><%= notice %></textarea></div>
+    <label class="check"><input type="checkbox" name="allowRegister" value="1" <%= cfg.allowRegister ? 'checked' : '' %>> Allow self-registration</label>
+  </div>
+  <div class="card-body right" style="padding-top:0"><button class="btn">Save site settings</button></div>
+</form>
+
+<form method="post" action="/admin/settings/telephony" class="card"><%- include('partials/csrf') %>
+  <div class="card-head"><h2><i class="bi bi-telephone"></i>Telephony</h2></div>
+  <div class="card-body">
+    <label class="check mb"><input type="radio" name="driver" value="simulator" <%= cfg.driver !== 'asterisk' ? 'checked' : '' %>> <b>Simulator</b>&nbsp;— demo mode, no real calls</label>
+    <label class="check mb"><input type="radio" name="driver" value="asterisk" data-toggle="#ari" <%= cfg.driver === 'asterisk' ? 'checked' : '' %>> <b>Asterisk</b>&nbsp;— real calls over ARI</label>
+    <div id="ari" class="hidden grid g2" style="gap:0 16px">
+      <div class="field"><label>ARI URL</label><input type="url" name="ariUrl" value="<%= cfg.ari.url %>"></div>
+      <div class="field"><label>Stasis app</label><input type="text" name="ariApp" value="<%= cfg.ari.app %>"></div>
+      <div class="field"><label>ARI username</label><input type="text" name="ariUser" value="<%= cfg.ari.user %>"></div>
+      <div class="field"><label>ARI password</label><input type="password" name="ariPass" placeholder="<%= cfg.ari.pass ? '(unchanged)' : '' %>"></div>
+      <div class="field"><label>Sounds folder</label><input type="text" name="soundsDir" value="<%= cfg.asterisk.soundsDir %>"></div>
+      <div class="field"><label>PJSIP include file</label><input type="text" name="pjsipFile" value="<%= cfg.asterisk.pjsipFile %>"></div>
+      <div class="field"><label>Public SIP host (for extensions)</label><input type="text" name="sipHost" value="<%= cfg.asterisk.sipHost %>"></div>
+      <div class="field"><label>Panel public URL</label><input type="url" name="publicUrl" value="<%= cfg.publicUrl %>" placeholder="https://panel.example.com"><div class="hint">Used when Asterisk is on another server and the sounds folder is empty.</div></div>
+      <div class="field"><label>MOH class</label><input type="text" name="mohClass" value="<%= cfg.asterisk.mohClass %>"></div>
+      <div><button type="button" class="btn sm outline" data-test-ari="/admin/settings/test-ari"><i class="bi bi-plug"></i>Test connection</button><div id="ari-result" class="hint"></div></div>
+    </div>
+  </div>
+  <div class="card-body right" style="padding-top:0"><button class="btn">Save telephony</button></div>
+</form>
+
+<% if (pjsip !== null) { %>
+<div class="card"><div class="card-head"><h2><i class="bi bi-file-code"></i>Generated Asterisk PJSIP config</h2>
+  <form method="post" action="/admin/settings/apply-pjsip"><%- include('partials/csrf') %><button class="btn sm"><i class="bi bi-arrow-clockwise"></i>Write &amp; reload</button></form></div>
+  <div class="card-body"><p class="hint" style="margin-top:0">Trunks and extensions from the panel. Written automatically on changes when the PJSIP include file is set. If Asterisk is on another server, copy this into <code>/etc/asterisk/pjsip_ipcall.conf</code> there.</p>
+  <pre style="max-height:360px"><%= pjsip %></pre></div></div>
+<% } %>
+<%- include('partials/bottom') %>

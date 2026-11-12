@@ -1,0 +1,27 @@
+<%- include('partials/top') %>
+<div class="page-head"><h1>Manage Group</h1>
+  <button class="btn" data-dialog="group" data-action="/groups" data-title="New group" data-fill='{"name":""}'><i class="bi bi-plus-lg"></i>Add Group</button></div>
+<div class="card">
+  <% if (!rows.length) { %><div class="empty"><i class="bi bi-people"></i>No groups yet. Groups let you call many contacts at once.</div><% } else { %>
+  <div class="table-wrap"><table class="t">
+    <thead><tr><th>SN</th><th>Name</th><th>Members</th><th>Status</th><th>Created</th><th class="actions">Action</th></tr></thead>
+    <tbody><% rows.forEach((g, i) => { %>
+      <tr><td><%= i + 1 %></td><td><a href="/contacts?group=<%= g.id %>"><%= g.name %></a></td><td><%= u.fmtNum(g.members) %></td>
+        <td><%- g.banned ? u.badge('failed', 'Banned') : u.badge('active', 'Active') %></td><td class="small"><%= u.fmtDate(g.created_at).slice(0, 10) %></td>
+        <td class="actions"><span class="icon-btns">
+          <a class="ib b" title="View members" href="/contacts?group=<%= g.id %>"><i class="bi bi-eye"></i></a>
+          <button class="ib p" title="Edit / add numbers" data-dialog="group" data-title="Edit group" data-action="/groups/<%= g.id %>/update" data-fill='<%= JSON.stringify({ name: g.name }) %>'><i class="bi bi-pencil"></i></button>
+          <form class="inline" method="post" action="/groups/<%= g.id %>/ban"><%- include('partials/csrf') %><button class="ib a" title="<%= g.banned ? 'Unban' : 'Ban' %>"><i class="bi bi-<%= g.banned ? 'unlock' : 'slash-circle' %>"></i></button></form>
+          <form class="inline" method="post" action="/groups/<%= g.id %>/delete" data-confirm="Delete this group? Contacts are kept."><%- include('partials/csrf') %><button class="ib r" title="Delete"><i class="bi bi-trash"></i></button></form>
+        </span></td></tr>
+    <% }) %></tbody></table></div><% } %>
+</div>
+<dialog id="group"><form method="post"><%- include('partials/csrf') %>
+  <div class="d-head"><h3>New group</h3><button type="button" class="x" data-close>&times;</button></div>
+  <div class="d-body">
+    <div class="field"><label>Group name</label><input type="text" name="name" required></div>
+    <div class="field"><label>Add numbers (optional)</label><textarea name="numbers" placeholder="One number per line, or comma separated"></textarea><div class="hint">New numbers are also saved as contacts.</div></div>
+  </div>
+  <div class="d-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn">Save</button></div>
+</form></dialog>
+<%- include('partials/bottom') %>

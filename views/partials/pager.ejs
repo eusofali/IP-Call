@@ -1,0 +1,15 @@
+<% if (pg.total > 0) { %>
+<div class="pager">
+  <span class="muted small">Showing <%= u.fmtNum(pg.offset + 1) %>–<%= u.fmtNum(Math.min(pg.offset + pg.per, pg.total)) %> of <%= u.fmtNum(pg.total) %></span>
+  <% if (pg.pages > 1) { %>
+  <div class="pages">
+    <% if (pg.page > 1) { %><a href="<%= u.qs(query, { page: pg.page - 1 }) %>">‹</a><% } %>
+    <% const from = Math.max(1, pg.page - 2), to = Math.min(pg.pages, pg.page + 2); %>
+    <% if (from > 1) { %><a href="<%= u.qs(query, { page: 1 }) %>">1</a><% if (from > 2) { %><span class="muted">…</span><% } %><% } %>
+    <% for (let i = from; i <= to; i++) { %><% if (i === pg.page) { %><span class="cur"><%= i %></span><% } else { %><a href="<%= u.qs(query, { page: i }) %>"><%= i %></a><% } %><% } %>
+    <% if (to < pg.pages) { %><% if (to < pg.pages - 1) { %><span class="muted">…</span><% } %><a href="<%= u.qs(query, { page: pg.pages }) %>"><%= pg.pages %></a><% } %>
+    <% if (pg.page < pg.pages) { %><a href="<%= u.qs(query, { page: pg.page + 1 }) %>">›</a><% } %>
+  </div>
+  <% } %>
+</div>
+<% } %>

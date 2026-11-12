@@ -1,0 +1,18 @@
+<%- include('partials/top') %>
+<div class="page-head"><h1>Tutorial</h1></div>
+<div class="grid g2">
+<% [
+  ['1','hdd-network','Add your IP number','Go to <a href="/ip-numbers">Manage IP Number</a> and enter the SIP details from your operator (number, password, server). Keep concurrency and calls-per-second low at first.'],
+  ['2','file-earmark-music','Upload a voice message','In <a href="/voice-files">Manage Voice File</a>, upload an MP3 or WAV. Short, clear messages (15–45 seconds) work best.'],
+  ['3','person-vcard','Add contacts & groups','Import a CSV in <a href="/contacts">Manage Contact</a> and organise people into <a href="/groups">groups</a>. Ban numbers that asked not to be called.'],
+  ['4','send','Send voice calls','Open <a href="/send-call">Send Voice Call</a>, choose numbers or groups and the voice file, and send. Watch progress in <a href="/batches">All Call Logs</a>.'],
+  ['5','diagram-3','Make it interactive','Create an <a href="/ivr">IVR</a> ("press 1 for sales"). Attach it to a campaign to record key presses, or enable it for inbound calls.'],
+  ['6','code-slash','Automate with the API','Use your key from <a href="/developers">Developers</a> to trigger calls from your website, CRM or billing system.'],
+].forEach(([n, ic, h, p]) => { %>
+  <div class="card"><div class="card-body row" style="align-items:flex-start;flex-wrap:nowrap">
+    <div class="avatar" style="flex:0 0 34px"><%= n %></div>
+    <div><h3 style="font-size:15px" class="mb"><i class="bi bi-<%= ic %>"></i> <%= h %></h3><p class="muted" style="margin:0"><%- p %></p></div>
+  </div></div>
+<% }) %>
+</div>
+<%- include('partials/bottom') %>

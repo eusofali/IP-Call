@@ -1,0 +1,15 @@
+<%- include('partials/top') %>
+<div class="page-head"><h1>Profile</h1></div>
+<form method="post" action="/profile" class="card" style="max-width:640px"><%- include('partials/csrf') %>
+  <div class="card-body">
+    <div class="field"><label>Username</label><input type="text" value="<%= user.username %>" disabled></div>
+    <div class="field"><label>Name</label><input type="text" name="name" value="<%= user.name %>"></div>
+    <div class="field"><label>Email</label><input type="email" name="email" value="<%= user.email || '' %>"></div>
+    <div class="field"><label>Mobile</label><input type="tel" name="phone" value="<%= user.phone || '' %>"></div>
+    <h3 style="font-size:15px" class="mt mb">Change password</h3>
+    <div class="field"><label>Current password</label><input type="password" name="current_password" autocomplete="current-password"></div>
+    <div class="field"><label>New password</label><input type="password" name="new_password" minlength="8" autocomplete="new-password"></div>
+    <button class="btn">Save</button>
+  </div>
+</form>
+<%- include('partials/bottom') %>
