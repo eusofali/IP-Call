@@ -19,7 +19,8 @@
   <div class="stat c-blue"><div class="ic"><i class="bi bi-telephone"></i></div><div><div class="v"><%= u.fmtNum(stats.total) %></div><div class="l">Total Calls</div></div></div>
   <div class="stat c-green"><div class="ic"><i class="bi bi-check2-circle"></i></div><div><div class="v"><%= u.fmtNum(stats.success) %></div><div class="l">Success · <%= u.pct(stats.success, stats.total) %></div></div></div>
   <div class="stat c-navy"><div class="ic"><i class="bi bi-telephone-x"></i></div><div><div class="v"><%= u.fmtNum(stats.failed) %></div><div class="l">Failed · <%= u.pct(stats.failed, stats.total) %></div></div></div>
-  <div class="stat c-teal"><div class="ic"><i class="bi bi-coin"></i></div><div><div class="v"><%= u.fmtMoney(stats.cost) %></div><div class="l">Cost</div></div></div>
+  <% if (cfg.billing) { %><div class="stat c-teal"><div class="ic"><i class="bi bi-coin"></i></div><div><div class="v"><%= u.fmtMoney(stats.cost) %></div><div class="l">Cost</div></div></div>
+  <% } else { %><div class="stat c-teal"><div class="ic"><i class="bi bi-hourglass-split"></i></div><div><div class="v"><%= u.fmtNum(stats.total - (stats.success || 0) - (stats.failed || 0)) %></div><div class="l">Pending</div></div></div><% } %>
   <div class="stat c-indigo"><div class="ic"><i class="bi bi-stopwatch"></i></div><div><div class="v"><%= u.fmtDuration(stats.duration) %></div><div class="l">Talk Time</div></div></div>
   <div class="stat c-orange"><div class="ic"><i class="bi bi-clock"></i></div><div><div class="v"><%= stats.success ? u.fmtDuration(stats.duration / stats.success) : '—' %></div><div class="l">Avg. Answered Call</div></div></div>
 </div>
@@ -43,7 +44,7 @@
   <div class="table-wrap"><table class="t">
     <thead><tr><th>SN</th><th>Batch</th><th>Sender</th><th>To</th>
       <th><a style="color:#fff" href="<%= u.qs(query, { sort: query.sort === 'asc' ? null : 'asc', page: null }) %>">Sent <i class="bi bi-arrow-<%= query.sort === 'asc' ? 'up' : 'down' %>"></i></a></th>
-      <th>Created</th><th>Status</th><th>Duration</th><th>DTMF</th><th>Cost</th><th class="actions">Action</th></tr></thead>
+      <th>Created</th><th>Status</th><th>Duration</th><th>DTMF</th><% if (cfg.billing) { %><th>Cost</th><% } %><th class="actions">Action</th></tr></thead>
     <tbody><% rows.forEach((c, i) => { %>
       <tr>
         <td><%= pg.offset + i + 1 %></td>
@@ -55,7 +56,7 @@
         <td><%- u.badge(c.status) %><% if (c.fail_reason) { %> <i class="bi bi-question-circle muted" title="<%= c.fail_reason %>"></i><span class="sub"><%= c.fail_reason %></span><% } %></td>
         <td class="mono"><%= c.duration != null ? u.fmtDuration(c.duration) : '—' %></td>
         <td class="mono"><%= c.dtmf || '—' %></td>
-        <td class="nowrap"><%= c.cost ? u.fmtMoney(c.cost) : '—' %></td>
+        <% if (cfg.billing) { %><td class="nowrap"><%= c.cost ? u.fmtMoney(c.cost) : '—' %></td><% } %>
         <td class="actions"><a class="btn sm outline" href="/calls/<%= c.id %>"><i class="bi bi-eye"></i>View</a></td>
       </tr>
     <% }) %></tbody>

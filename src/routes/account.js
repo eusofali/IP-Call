@@ -6,6 +6,7 @@ const { pulseCost } = require('../services/billing');
 
 // ---------------- Billing ----------------
 router.get('/billing', (req, res) => {
+  if (!require('../config').billing) return res.redirect('/');
   const total = db.prepare('SELECT COUNT(*) n FROM transactions WHERE user_id = ?').get(req.user.id).n;
   const pg = u.paginate(total, u.int(req.query.page, 1), 50);
   const rows = db.prepare('SELECT * FROM transactions WHERE user_id = ? ORDER BY id DESC LIMIT ? OFFSET ?').all(req.user.id, pg.per, pg.offset);

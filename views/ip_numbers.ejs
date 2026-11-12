@@ -19,7 +19,7 @@
         </span></td></tr>
     <% }) %></tbody></table></div><% } %>
 </div>
-<p class="hint">Status is refreshed from <%= cfg.driver === 'asterisk' ? 'Asterisk every 30 seconds' : 'the simulator (no real registration)' %>. Balance on the operator side is not visible here — your <a href="/billing">wallet balance</a> is what calls are charged to.</p>
+<p class="hint">Status is refreshed from <%= cfg.driver === 'asterisk' ? 'Asterisk every 30 seconds' : 'the simulator (no real registration)' %>. Call charges and balance are managed by your SIP provider.</p>
 
 <dialog id="trunk"><form method="post"><%- include('partials/csrf') %>
   <div class="d-head"><h3>Add IP number</h3><button type="button" class="x" data-close>&times;</button></div>

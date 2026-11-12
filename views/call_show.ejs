@@ -11,7 +11,7 @@
     <% if (c.ivr_name) { %><dt>IVR</dt><dd><%= c.ivr_name %></dd><% } %>
     <dt>Keys pressed (DTMF)</dt><dd class="mono"><%= c.dtmf || '—' %></dd>
     <dt>Duration</dt><dd><%= c.duration != null ? u.fmtDuration(c.duration) : '—' %></dd>
-    <dt>Cost</dt><dd><%= u.fmtMoney(c.cost) %></dd>
+    <% if (cfg.billing) { %><dt>Cost</dt><dd><%= u.fmtMoney(c.cost) %></dd><% } %>
     <dt>Attempts</dt><dd><%= c.attempts %></dd>
     <dt>Created</dt><dd><%= u.fmtDate(c.initiated_at) %></dd>
     <dt>Dialed</dt><dd><%= u.fmtDate(c.sent_at) %></dd>

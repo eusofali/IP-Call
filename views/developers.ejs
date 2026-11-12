@@ -3,7 +3,7 @@
 <div class="card"><div class="card-head"><h2><i class="bi bi-key"></i>Your API key</h2>
   <form method="post" action="/developers/regenerate" data-confirm="Generate a new key? The current key stops working immediately."><%- include('partials/csrf') %><button class="btn sm ghost"><i class="bi bi-arrow-repeat"></i>Regenerate</button></form></div>
   <div class="card-body"><span class="secret" data-secret="<%= user.api_key %>"><span class="val">••••••••••••</span><button class="ib k" data-reveal><i class="bi bi-eye"></i></button><button class="ib k" data-copy="<%= user.api_key %>"><i class="bi bi-clipboard"></i></button></span>
-  <p class="hint">Send it as <code>Authorization: Bearer YOUR_KEY</code>. Keep it secret — anyone with it can spend your balance.</p></div></div>
+  <p class="hint">Send it as <code>Authorization: Bearer YOUR_KEY</code>. Keep it secret — anyone with it can place calls from your account.</p></div></div>
 
 <div class="card"><div class="card-head"><h2>Endpoints</h2><span class="small muted">Base URL: <code><%= base %>/api/v1</code></span></div>
 <div class="card-body">
@@ -14,7 +14,7 @@
     <tr><td><code>GET</code></td><td><code>/calls?batch_id=&amp;status=&amp;after_id=&amp;limit=</code></td><td>List calls (newest first)</td></tr>
     <tr><td><code>GET</code></td><td><code>/calls/{id}</code></td><td>One call: status, reason, DTMF, duration, cost</td></tr>
     <tr><td><code>GET</code></td><td><code>/voice-files</code>, <code>/ip-numbers</code></td><td>IDs to use in <code>POST /calls</code></td></tr>
-    <tr><td><code>GET</code></td><td><code>/balance</code></td><td>Wallet balance and rate</td></tr>
+    <% if (cfg.billing) { %><tr><td><code>GET</code></td><td><code>/balance</code></td><td>Wallet balance and rate</td></tr><% } %>
   </tbody></table>
   <h3 style="font-size:14px" class="mb">cURL</h3>
 <pre>curl -X POST <%= base %>/api/v1/calls \
@@ -32,6 +32,6 @@ curl_setopt_array($ch, [
 $result = json_decode(curl_exec($ch), true); // ['batch_id' => 12, 'queued' => 1, ...]</pre>
   <h3 style="font-size:14px" class="mb mt">Response</h3>
 <pre>{ "batch_id": 12, "queued": 2, "invalid": 0, "skipped_banned": 0, "scheduled": false }</pre>
-  <p class="hint">Errors return HTTP 401 (bad key), 422 (validation, e.g. insufficient balance) with <code>{"error": "..."}</code>.</p>
+  <p class="hint">Errors return HTTP 401 (bad key), 422 (validation, e.g. no valid numbers) with <code>{"error": "..."}</code>.</p>
 </div></div>
 <%- include('partials/bottom') %>

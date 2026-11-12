@@ -36,7 +36,17 @@ function createAsteriskDriver() {
     if (stopped) return;
     const url = base().replace(/^http/, 'ws') + `/ari/events?app=${encodeURIComponent(cfg.ari.app)}&subscribeAll=false`;
     ws = new WebSocket(url, { headers: { Authorization: auth() } });
-    ws.on('open', () => { retry = 1000; console.log('[ari] connected to', base()); });
+    ws.on('open', () => {
+      retry = 1000;
+      console.log('[ari] connected to', base());
+      // Make sure Asterisk has every trunk/extension from the panel (they may have been added in simulator mode,
+      // before the PJSIP file path was set, or while Asterisk was down).
+      if (cfg.asterisk.pjsipFile) {
+        require('../services/asterisk-config').applyPjsip(driver)
+          .then((m) => console.log('[ari]', m))
+          .catch((e) => console.warn('[ari] could not write/reload PJSIP config:', e.message));
+      }
+    });
     ws.on('message', (m) => {
       try {
         const ev = JSON.parse(m);
@@ -210,7 +220,7 @@ function createAsteriskDriver() {
     runQueue(s);
   }
 
-  return {
+  const driver = {
     name: 'asterisk',
     start(e) { engine = e; stopped = false; connect(); },
     stop() { stopped = true; ws?.close(); },
@@ -224,7 +234,10 @@ function createAsteriskDriver() {
         callerId: ctx.trunk.number, timeout: 45,
       }).catch((e) => {
         sessions.delete(channelId);
-        h.ended({ reason: 'Originate failed: ' + e.message.slice(0, 150) });
+        const reason = /Allocation failed/.test(e.message)
+          ? `IP number not loaded in Asterisk (endpoint trunk${ctx.trunk.id} missing). Admin → Settings → Write & reload`
+          : 'Originate failed: ' + e.message.slice(0, 150);
+        h.ended({ reason });
       });
       return { hangup: () => quiet(ari('DELETE', `/channels/${channelId}`)) };
     },
@@ -265,6 +278,7 @@ function createAsteriskDriver() {
       }
     },
   };
+  return driver;
 }
 
 /** Quick connectivity check used by the setup wizard and settings page. */

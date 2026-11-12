@@ -18,7 +18,7 @@ It runs on **cPanel shared hosting** (no root) and on a **VPS** (root), and has 
 | Manage Extension | SIP accounts for agents, password reveal/copy/reset, softphone downloads |
 | Manage IP Number | SIP trunks with per-trunk concurrency and calls-per-second limits |
 | IVR Management | Welcome voice, music on hold, IVR menus (play file / transfer to extension / forward to mobile / repeat / hang up) |
-| Billing | Wallet, rate, pulse, transaction ledger |
+| Billing (optional) | Wallet, rate, pulse, transaction ledger (only when billing is enabled) |
 | Developers | API key and REST docs (cURL + PHP examples) |
 | Support Ticket | User ↔ admin threads |
 | Admin | Users, top-ups, rates, impersonation, site and telephony settings, cron URL, generated Asterisk config |
@@ -108,7 +108,9 @@ Endpoints: `POST /calls`, `GET /calls`, `GET /calls/{id}`, `GET /batches/{id}`, 
 
 ## Billing model
 
-Each user has a **rate per minute** and a **pulse** (e.g. 60 s = per-minute billing, 1 s = per-second). Only answered calls are charged, rounded up to the pulse. A batch pauses itself with "Insufficient balance" when the wallet can't cover the next call, and resumes automatically when an admin tops up.
+**Off by default:** call charges and balance are normally handled by your SIP provider, so the panel never blocks or charges calls. To resell minutes to your own customers, turn on *Admin → Settings → Enable wallet & per-call billing* (or `BILLING_ENABLED=1`).
+
+When enabled, each user has a **rate per minute** and a **pulse** (e.g. 60 s = per-minute billing, 1 s = per-second). Only answered calls are charged, rounded up to the pulse. A batch pauses itself with "Insufficient balance" when the wallet can't cover the next call, and resumes automatically when an admin tops up.
 
 ## Operations notes
 

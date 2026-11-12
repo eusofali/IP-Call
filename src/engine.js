@@ -110,7 +110,7 @@ class Engine extends EventEmitter {
     }
     // Reserve one pulse for each call already in flight so concurrent calls can't overdraw much.
     const inFlight = [...this.active.values()].filter((a) => a.userId === user.id).length;
-    if (user.balance < pulseCost(user) * (inFlight + 1)) {
+    if (cfg.billing && user.balance < pulseCost(user) * (inFlight + 1)) {
       if (inFlight === 0) {
         db.prepare("UPDATE batches SET status = 'paused', pause_reason = 'Insufficient balance' WHERE id = ? AND status = 'running'").run(call.batch_id);
       }
@@ -183,7 +183,7 @@ class Engine extends EventEmitter {
     if (s.answeredAt) {
       const duration = Math.max(1, Math.round(info.duration ?? (Date.now() - s.answeredAt) / 1000));
       const user = db.prepare('SELECT * FROM users WHERE id = ?').get(call.user_id);
-      const cost = call.direction === 'out' ? callCost(duration, user.rate_per_min, user.pulse_sec) : 0;
+      const cost = cfg.billing && call.direction === 'out' ? callCost(duration, user.rate_per_min, user.pulse_sec) : 0;
       db.transaction(() => {
         db.prepare(`UPDATE calls SET status = 'completed', duration = ?, cost = ?, hangup_cause = ?, ended_at = ? WHERE id = ?`)
           .run(duration, cost, info.cause ?? null, ts, callId);

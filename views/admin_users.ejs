@@ -1,16 +1,16 @@
 <%- include('partials/top') %>
-<div class="page-head"><div><h1>Users &amp; Balance</h1><p>System: <%= u.fmtNum(sys.total) %> calls · <%= u.fmtNum(sys.success) %> answered · revenue <%= u.fmtMoney(sys.revenue) %></p></div>
+<div class="page-head"><div><h1><%= cfg.billing ? 'Users & Balance' : 'Users' %></h1><p>System: <%= u.fmtNum(sys.total) %> calls · <%= u.fmtNum(sys.success) %> answered<%= cfg.billing ? ' · revenue ' + u.fmtMoney(sys.revenue) : '' %></p></div>
   <button class="btn" data-dialog="new-user"><i class="bi bi-person-plus"></i>New user</button></div>
 <div class="card"><div class="card-body"><form class="filters" method="get"><div class="field"><label>Search</label><input type="search" name="q" value="<%= q %>" placeholder="Username, name or email"></div><div class="field"><button class="btn block">Search</button></div></form></div></div>
 <div class="card"><div class="table-wrap"><table class="t">
-  <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Balance</th><th>Rate</th><th>Trunks</th><th>Calls</th><th>Joined</th><th class="actions">Action</th></tr></thead>
+  <thead><tr><th>User</th><th>Role</th><th>Status</th><% if (cfg.billing) { %><th>Balance</th><th>Rate</th><% } %><th>Trunks</th><th>Calls</th><th>Joined</th><th class="actions">Action</th></tr></thead>
   <tbody><% rows.forEach(r => { %>
     <tr><td><b><%= r.username %></b><span class="sub"><%= r.name %><%= r.email ? ' · ' + r.email : '' %></span></td>
       <td><%- r.role === 'admin' ? u.badge('scheduled', 'Admin') : u.badge('queued', 'User') %></td><td><%- u.badge(r.status) %></td>
-      <td class="nowrap"><b><%= u.fmtMoney(r.balance) %></b></td><td class="small nowrap"><%= u.fmtMoney(r.rate_per_min) %>/min · <%= r.pulse_sec %>s</td>
+      <% if (cfg.billing) { %>      <td class="nowrap"><b><%= u.fmtMoney(r.balance) %></b></td><td class="small nowrap"><%= u.fmtMoney(r.rate_per_min) %>/min · <%= r.pulse_sec %>s</td><% } %>
       <td><%= r.trunks %></td><td><%= u.fmtNum(r.calls) %></td><td class="small"><%= u.fmtDate(r.created_at).slice(0, 10) %></td>
       <td class="actions"><span class="icon-btns">
-        <button class="ib g" title="Add / deduct balance" data-dialog="balance" data-title="Balance: <%= r.username %>" data-action="/admin/users/<%= r.id %>/balance" data-fill='{"amount":"","note":""}'><i class="bi bi-cash-coin"></i></button>
+        <% if (cfg.billing) { %>        <button class="ib g" title="Add / deduct balance" data-dialog="balance" data-title="Balance: <%= r.username %>" data-action="/admin/users/<%= r.id %>/balance" data-fill='{"amount":"","note":""}'><i class="bi bi-cash-coin"></i></button><% } %>
         <button class="ib p" title="Edit" data-dialog="edit-user" data-title="Edit <%= r.username %>" data-action="/admin/users/<%= r.id %>/update" data-fill='<%= JSON.stringify({ name: r.name, email: r.email || "", phone: r.phone || "", role: r.role, status: r.status, rate_per_min: r.rate_per_min, pulse_sec: r.pulse_sec, max_extensions: r.max_extensions, password: "" }) %>'><i class="bi bi-pencil"></i></button>
         <% if (r.id !== user.id) { %>
         <form class="inline" method="post" action="/admin/users/<%= r.id %>/impersonate"><%- include('partials/csrf') %><button class="ib b" title="Login as this user"><i class="bi bi-box-arrow-in-right"></i></button></form>
@@ -27,8 +27,8 @@
     <div class="field"><label>Mobile</label><input type="tel" name="phone"></div>
     <div class="field"><label>Role</label><select name="role"><option value="user">User</option><option value="admin">Admin</option></select></div>
     ${isNew ? '' : '<div class="field"><label>Status</label><select name="status"><option value="active">Active</option><option value="suspended">Suspended</option></select></div>'}
-    <div class="field"><label>Rate per minute</label><input type="number" step="0.0001" min="0" name="rate_per_min" value="0.35"></div>
-    <div class="field"><label>Billing pulse (seconds)</label><input type="number" min="1" name="pulse_sec" value="60"></div>
+    ${cfg.billing ? '' : '<!--'}<div class="field"><label>Rate per minute</label><input type="number" step="0.0001" min="0" name="rate_per_min" value="0.35"></div>
+    <div class="field"><label>Billing pulse (seconds)</label><input type="number" min="1" name="pulse_sec" value="60"></div>${cfg.billing ? '' : '-->'}
     <div class="field"><label>Max extensions</label><input type="number" min="0" name="max_extensions" value="10"></div>
     <div class="field"><label>${isNew ? 'Password' : 'New password (optional)'}</label><input type="password" name="password" ${isNew ? 'required minlength="8"' : ''} autocomplete="new-password"></div>
   </div>`; %>

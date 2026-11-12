@@ -1,6 +1,7 @@
 const { db } = require('../db');
 const { now, normalizePhone } = require('../util');
 const { pulseCost } = require('./billing');
+const cfg = require('../config');
 
 class UserError extends Error {}
 
@@ -62,7 +63,7 @@ function createBatch(user, opts) {
 
   const fresh = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
   const minCost = pulseCost(fresh);
-  if (fresh.balance < minCost) {
+  if (cfg.billing && fresh.balance < minCost) {
     throw new UserError(`Insufficient balance. You need at least ${minCost.toFixed(2)} to place a call; current balance is ${fresh.balance.toFixed(2)}.`);
   }
 

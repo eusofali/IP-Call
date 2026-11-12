@@ -28,13 +28,13 @@
       <%- nav('batches', '/batches', 'collection', 'All Call Logs') %>
       <%- nav('monitoring', '/monitoring', 'bar-chart-line', 'Call Monitoring') %>
       <%- nav('ivr', '/ivr', 'diagram-3', 'IVR Management') %>
-      <%- nav('billing', '/billing', 'receipt', 'Billing') %>
+      <% if (cfg.billing) { %><%- nav('billing', '/billing', 'receipt', 'Billing') %><% } %>
       <%- nav('developers', '/developers', 'code-slash', 'Developers') %>
       <%- nav('tickets', '/tickets', 'headset', 'Support Ticket') %>
       <%- nav('tutorial', '/tutorial', 'play-circle', 'Tutorial') %>
       <% if (user.role === 'admin') { %>
         <div class="sep">Admin</div>
-        <%- nav('admin-users', '/admin/users', 'person-gear', 'Users & Balance') %>
+        <%- nav('admin-users', '/admin/users', 'person-gear', cfg.billing ? 'Users & Balance' : 'Users') %>
         <%- nav('admin-settings', '/admin/settings', 'sliders', 'Settings') %>
       <% } %>
     </nav>
@@ -43,7 +43,7 @@
   <div class="main">
     <header class="topbar">
       <button class="menu-btn" aria-label="Menu"><i class="bi bi-list"></i></button>
-      <a class="wallet <%= user.balance < 1 ? 'low' : '' %>" href="/billing" title="Wallet balance"><i class="bi bi-wallet2"></i><span class="amt"><%= u.fmtMoney(user.balance) %></span></a>
+      <% if (cfg.billing) { %><a class="wallet <%= user.balance < 1 ? 'low' : '' %>" href="/billing" title="Wallet balance"><i class="bi bi-wallet2"></i><span class="amt"><%= u.fmtMoney(user.balance) %></span></a><% } %>
       <details class="userbox">
         <summary><span class="avatar"><%= (user.name || user.username).trim().charAt(0) %></span><span class="name"><%= user.username %></span><i class="bi bi-chevron-down"></i></summary>
         <div class="menu">

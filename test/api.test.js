@@ -7,7 +7,7 @@ const path = require('path');
 
 Object.assign(process.env, {
   DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'ipc-api-')),
-  ADMIN_USERNAME: 'admin', ADMIN_PASSWORD: 'secret123', CALL_DRIVER: 'simulator', SIM_SPEED: '200', ENGINE_TICK_MS: '50',
+  ADMIN_USERNAME: 'admin', ADMIN_PASSWORD: 'secret123', CALL_DRIVER: 'simulator', BILLING_ENABLED: '1', SIM_SPEED: '200', ENGINE_TICK_MS: '50',
 });
 const { db } = require('../src/db');
 const { Engine } = require('../src/engine');
@@ -85,4 +85,24 @@ test('web pages require login and render after login', async () => {
   // CSRF is enforced
   const bad = await fetch(base + '/groups', { method: 'POST', headers: { cookie: sess, 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'name=x' });
   assert.strictEqual(bad.status, 403);
+});
+
+test('with billing disabled, calls run with zero balance and are not charged', async () => {
+  const cfg = require('../src/config');
+  cfg.billing = false;
+  try {
+    db.prepare("UPDATE users SET balance = 0 WHERE username = 'admin'").run();
+    const before = db.prepare('SELECT COUNT(*) n FROM transactions').get().n;
+    const r = await api('/calls', { method: 'POST', body: JSON.stringify({ numbers: ['01811111111', '01811111112', '01811111113'], voice_file_id: 1 }) });
+    assert.strictEqual(r.status, 201, JSON.stringify(r.body));
+    let b;
+    for (let i = 0; i < 200; i++) {
+      b = (await api('/batches/' + r.body.batch_id)).body;
+      if (b.status === 'completed') break;
+      await new Promise((res) => setTimeout(res, 100));
+    }
+    assert.strictEqual(b.status, 'completed');
+    assert.strictEqual(b.cost, 0);
+    assert.strictEqual(db.prepare('SELECT COUNT(*) n FROM transactions').get().n, before);
+  } finally { cfg.billing = true; }
 });

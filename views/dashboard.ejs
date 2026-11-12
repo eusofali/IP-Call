@@ -3,7 +3,7 @@
 
 <% if (notice) { %><div class="notice-bar"><b><i class="bi bi-megaphone"></i>Notice</b><div class="marquee"><span><%= notice %></span></div></div><% } %>
 <% if (!trunks.length) { %><div class="alert warn"><i class="bi bi-info-circle"></i><div>No IP number yet. <a href="/ip-numbers">Add your SIP trunk</a> before sending calls.</div></div><% } %>
-<% if (user.balance <= 0) { %><div class="alert warn"><i class="bi bi-wallet2"></i><div>Your wallet balance is <%= u.fmtMoney(user.balance) %>. Calls cannot be placed until it is topped up.</div></div><% } %>
+<% if (cfg.billing && user.balance <= 0) { %><div class="alert warn"><i class="bi bi-wallet2"></i><div>Your wallet balance is <%= u.fmtMoney(user.balance) %>. Calls cannot be placed until it is topped up.</div></div><% } %>
 
 <div class="grid g4 mb">
   <div class="stat c-blue"><div class="ic"><i class="bi bi-telephone-outbound"></i></div><div><div class="v"><%= u.fmtNum(totals.total) %></div><div class="l">Total Voice Calls Sent</div></div><a class="more" href="/calls">View all</a></div>
@@ -16,7 +16,8 @@
   <div class="mini m-blue"><div><div class="l">Active Calls (live)</div><div class="v" data-live-count>0</div></div><i class="bi bi-headset"></i></div>
   <div class="mini m-green"><div><div class="l">Successful Calls (today)</div><div class="v"><%= u.fmtNum(today.success) %></div></div><i class="bi bi-telephone"></i></div>
   <div class="mini m-teal"><div><div class="l">Success Rate (today)</div><div class="v"><%= u.pct(today.success, (today.success || 0) + (today.failed || 0)) %></div></div><i class="bi bi-percent"></i></div>
-  <div class="mini m-purple"><div><div class="l">Spent Today</div><div class="v"><%= u.fmtMoney(today.cost) %></div></div><i class="bi bi-cash-coin"></i></div>
+  <% if (cfg.billing) { %><div class="mini m-purple"><div><div class="l">Spent Today</div><div class="v"><%= u.fmtMoney(today.cost) %></div></div><i class="bi bi-cash-coin"></i></div>
+  <% } else { %><div class="mini m-purple"><div><div class="l">Failed Calls (today)</div><div class="v"><%= u.fmtNum(today.failed) %></div></div><i class="bi bi-telephone-x"></i></div><% } %>
 </div>
 
 <div class="grid g4 mb">

@@ -29,7 +29,9 @@
     </div>
     <div class="field"><label class="check"><input type="checkbox" name="schedule" value="1" data-toggle="#sched" <%= form.schedule ? 'checked' : '' %>> Schedule for later</label></div>
     <div class="field hidden" id="sched"><label>Start at (<%= cfg.tz %>)</label><input type="datetime-local" name="scheduled_at" value="<%= form.scheduled_at || '' %>"></div>
+    <% if (cfg.billing) { %>
     <div class="alert info small"><i class="bi bi-info-circle"></i><div>Rate: <b><%= u.fmtMoney(user.rate_per_min) %>/min</b>, billed per <%= user.pulse_sec %> s pulse. Only answered calls are charged. Balance: <b><%= u.fmtMoney(user.balance) %></b>.</div></div>
+    <% } %>
     <button class="btn block" <%= !trunks.length ? 'disabled' : '' %>><i class="bi bi-send"></i>Send Calls</button>
   </div></div>
 </form>

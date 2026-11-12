@@ -20,7 +20,9 @@
     <div class="field"><label>Phone number format</label><select name="country"><option value="BD" <%= cfg.country === 'BD' ? 'selected' : '' %>>Bangladesh</option><option value="INTL" <%= cfg.country !== 'BD' ? 'selected' : '' %>>International</option></select></div>
     <div class="field"><label>Max simultaneous calls (whole system)</label><input type="number" name="maxConcurrent" min="1" value="<%= cfg.maxConcurrent %>"></div>
     <div class="field" style="grid-column:1/-1"><label>Dashboard notice (shown to all users)</label><textarea name="notice" rows="2"><%= notice %></textarea></div>
-    <label class="check"><input type="checkbox" name="allowRegister" value="1" <%= cfg.allowRegister ? 'checked' : '' %>> Allow self-registration</label>
+    <div><label class="check"><input type="checkbox" name="allowRegister" value="1" <%= cfg.allowRegister ? 'checked' : '' %>> Allow self-registration</label>
+    <label class="check mt"><input type="checkbox" name="billing" value="1" <%= cfg.billing ? 'checked' : '' %>> Enable wallet &amp; per-call billing in this panel</label>
+    <div class="hint">Leave off when your SIP provider bills the calls. Turn on only to resell minutes to your own customers.</div></div>
   </div>
   <div class="card-body right" style="padding-top:0"><button class="btn">Save site settings</button></div>
 </form>
@@ -46,6 +48,10 @@
   <div class="card-body right" style="padding-top:0"><button class="btn">Save telephony</button></div>
 </form>
 
+<% if (cfg.driver === 'asterisk' && !cfg.asterisk.pjsipFile) { %>
+<div class="alert warn"><i class="bi bi-exclamation-triangle"></i><div><b>PJSIP include file is empty.</b> Asterisk will not know your IP numbers and calls fail with "Allocation failed".
+If Asterisk runs on this server, set it to <code>/etc/asterisk/pjsip_ipcall.conf</code> above and save. If Asterisk is on another server, copy the config below there.</div></div>
+<% } %>
 <% if (pjsip !== null) { %>
 <div class="card"><div class="card-head"><h2><i class="bi bi-file-code"></i>Generated Asterisk PJSIP config</h2>
   <form method="post" action="/admin/settings/apply-pjsip"><%- include('partials/csrf') %><button class="btn sm"><i class="bi bi-arrow-clockwise"></i>Write &amp; reload</button></form></div>

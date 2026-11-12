@@ -97,7 +97,7 @@ router.post('/settings/site', (req, res) => {
   saveConfig({
     appName: String(b.appName || '').trim().slice(0, 60) || cfg.appName, currency: String(b.currency || '').trim().slice(0, 8) || cfg.currency,
     tz, country: b.country === 'BD' ? 'BD' : 'INTL', helpline: String(b.helpline || '').trim().slice(0, 40),
-    allowRegister: b.allowRegister ? '1' : '0', maxConcurrent: String(Math.max(1, u.int(b.maxConcurrent, cfg.maxConcurrent))),
+    allowRegister: b.allowRegister ? '1' : '0', billing: b.billing ? '1' : '0', maxConcurrent: String(Math.max(1, u.int(b.maxConcurrent, cfg.maxConcurrent))),
   });
   setSetting('notice', String(b.notice || '').slice(0, 1000));
   req.flash('success', 'Settings saved.');

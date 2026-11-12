@@ -11,6 +11,8 @@ const cfg = {
   currency: env.CURRENCY || '৳',
   country: env.DEFAULT_COUNTRY || 'BD',
   allowRegister: env.ALLOW_REGISTER === '1',
+  // Prepaid wallet + per-call charging inside the panel. Off by default: usually the SIP provider bills the calls.
+  billing: env.BILLING_ENABLED === '1',
   helpline: env.HELPLINE || '',
   secureCookies: env.SECURE_COOKIES === '1',
   publicUrl: (env.PUBLIC_URL || '').replace(/\/+$/, ''), // e.g. https://panel.example.com (used for remote Asterisk media)
@@ -41,7 +43,7 @@ const cfg = {
 
 // Settings saved by the setup wizard / admin settings page override .env values.
 // Keys are flat: "appName", "ari.url", "asterisk.soundsDir", ...
-const EDITABLE = ['appName', 'publicUrl', 'currency', 'tz', 'country', 'helpline', 'allowRegister', 'driver', 'simSpeed', 'maxConcurrent',
+const EDITABLE = ['appName', 'publicUrl', 'currency', 'tz', 'country', 'helpline', 'allowRegister', 'billing', 'driver', 'simSpeed', 'maxConcurrent',
   'ari.url', 'ari.user', 'ari.pass', 'ari.app', 'ami.host', 'ami.user', 'ami.pass', 'asterisk.soundsDir', 'asterisk.pjsipFile', 'asterisk.sipHost', 'asterisk.mohClass'];
 
 function applyOverrides(map) {

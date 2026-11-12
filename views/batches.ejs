@@ -3,14 +3,14 @@
 <div class="card">
   <% if (!rows.length) { %><div class="empty"><i class="bi bi-collection"></i>No batches yet.</div><% } else { %>
   <div class="table-wrap"><table class="t">
-    <thead><tr><th>Batch</th><th>Message</th><th>From</th><th>Status</th><th>Progress</th><th>Success</th><th>Failed</th><th>Cost</th><th>Created</th><th class="actions">Action</th></tr></thead>
+    <thead><tr><th>Batch</th><th>Message</th><th>From</th><th>Status</th><th>Progress</th><th>Success</th><th>Failed</th><% if (cfg.billing) { %><th>Cost</th><% } %><th>Created</th><th class="actions">Action</th></tr></thead>
     <tbody><% rows.forEach(b => { const done = b.total - b.pending; %>
       <tr><td><a href="/calls?batch=<%= b.id %>">#<%= b.id %></a><span class="sub"><%= b.name || (b.source === 'api' ? 'API' : 'Web') %></span></td>
         <td class="small"><%= b.voice_name || '—' %><%= b.ivr_name ? ' + IVR ' + b.ivr_name : '' %></td>
         <td class="small"><%= b.trunk_number || '—' %></td>
         <td><%- u.badge(b.status) %><% if (b.pause_reason) { %><span class="sub"><%= b.pause_reason %></span><% } %><% if (b.status === 'scheduled') { %><span class="sub"><%= u.fmtDate(b.scheduled_at) %></span><% } %></td>
         <td><div class="progress"><div style="width:<%= b.total ? (done / b.total * 100).toFixed(0) : 0 %>%"></div></div><span class="sub"><%= u.fmtNum(done) %> / <%= u.fmtNum(b.total) %></span></td>
-        <td><%= u.fmtNum(b.success) %> <span class="sub"><%= u.pct(b.success, done) %></span></td><td><%= u.fmtNum(b.failed) %></td><td><%= u.fmtMoney(b.cost) %></td>
+        <td><%= u.fmtNum(b.success) %> <span class="sub"><%= u.pct(b.success, done) %></span></td><td><%= u.fmtNum(b.failed) %></td><% if (cfg.billing) { %><td><%= u.fmtMoney(b.cost) %></td><% } %>
         <td class="small nowrap"><%= u.fmtDate(b.created_at) %></td>
         <td class="actions"><span class="icon-btns">
           <a class="ib b" title="View calls" href="/calls?batch=<%= b.id %>"><i class="bi bi-eye"></i></a>
