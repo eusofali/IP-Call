@@ -240,10 +240,28 @@ function createAsteriskDriver() {
         db.prepare('UPDATE extensions SET status = ?, last_sync = ? WHERE id = ?')
           .run(st === 'online' ? 'connected' : st ? 'disconnected' : 'unknown', ts, x.id);
       }
+      // Trunks: the registration status is what matters. The endpoint state only reflects OPTIONS
+      // "qualify" replies, which many operators never send, so it shows offline for working trunks.
+      let regs = null, amiError = null;
+      try { regs = await require('./ami').outboundRegistrations(); } catch (e) { amiError = e.message; }
+      const REG = {
+        Registered: ['connected', 'Registered with operator'],
+        Unregistered: ['disconnected', 'Not registered: no reply from SIP server (check server, port, firewall)'],
+        Rejected: ['disconnected', 'Registration rejected: check username/password, or ask the operator to whitelist this server IP'],
+        Stopped: ['disconnected', 'Registration stopped after repeated failures (save the IP number again to retry)'],
+      };
       for (const t of db.prepare('SELECT id FROM ip_numbers').all()) {
-        const st = byName.get(`trunk${t.id}`);
-        db.prepare('UPDATE ip_numbers SET status = ?, last_sync = ? WHERE id = ?')
-          .run(st === 'online' ? 'connected' : st ? 'disconnected' : 'unknown', ts, t.id);
+        let status, detail;
+        if (regs && regs.has(`trunk${t.id}-reg`)) {
+          [status, detail] = REG[regs.get(`trunk${t.id}-reg`)] || ['disconnected', regs.get(`trunk${t.id}-reg`)];
+        } else if (regs) {
+          [status, detail] = ['unknown', 'Not loaded in Asterisk yet (Admin → Settings → Write & reload)'];
+        } else {
+          const st = byName.get(`trunk${t.id}`);
+          status = st === 'online' ? 'connected' : st ? 'disconnected' : 'unknown';
+          detail = `Registration status unavailable (${amiError}); showing reachability only`;
+        }
+        db.prepare('UPDATE ip_numbers SET status = ?, status_detail = ?, last_sync = ? WHERE id = ?').run(status, detail, ts, t.id);
       }
     },
   };

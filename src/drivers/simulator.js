@@ -13,7 +13,7 @@ function createSimulator() {
     stop() { for (const t of timers) clearTimeout(t); timers.clear(); },
     async syncEndpoints() {
       const { db } = require('../db');
-      db.prepare("UPDATE ip_numbers SET status = 'connected', last_sync = ? WHERE enabled = 1").run(new Date().toISOString());
+      db.prepare("UPDATE ip_numbers SET status = 'connected', status_detail = 'Simulated', last_sync = ? WHERE enabled = 1").run(new Date().toISOString());
     },
     originate(ctx, h) {
       let done = false;

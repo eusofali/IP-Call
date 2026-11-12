@@ -25,6 +25,12 @@ const cfg = {
     pass: env.ARI_PASSWORD || '',
     app: env.ARI_APP || 'ipcall',
   },
+  ami: { // read-only use: trunk registration status (see asterisk/manager.conf)
+    host: env.AMI_HOST || '127.0.0.1',
+    port: Number(env.AMI_PORT) || 5038,
+    user: env.AMI_USER || '',
+    pass: env.AMI_PASSWORD || '',
+  },
   asterisk: {
     soundsDir: env.ASTERISK_SOUNDS_DIR || '', // e.g. /var/lib/asterisk/sounds/ipcall
     pjsipFile: env.ASTERISK_PJSIP_FILE || '', // e.g. /etc/asterisk/pjsip_ipcall.conf
@@ -36,7 +42,7 @@ const cfg = {
 // Settings saved by the setup wizard / admin settings page override .env values.
 // Keys are flat: "appName", "ari.url", "asterisk.soundsDir", ...
 const EDITABLE = ['appName', 'publicUrl', 'currency', 'tz', 'country', 'helpline', 'allowRegister', 'driver', 'simSpeed', 'maxConcurrent',
-  'ari.url', 'ari.user', 'ari.pass', 'ari.app', 'asterisk.soundsDir', 'asterisk.pjsipFile', 'asterisk.sipHost', 'asterisk.mohClass'];
+  'ari.url', 'ari.user', 'ari.pass', 'ari.app', 'ami.host', 'ami.user', 'ami.pass', 'asterisk.soundsDir', 'asterisk.pjsipFile', 'asterisk.sipHost', 'asterisk.mohClass'];
 
 function applyOverrides(map) {
   for (const key of EDITABLE) {

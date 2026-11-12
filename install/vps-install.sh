@@ -40,17 +40,17 @@ if ! command -v node >/dev/null || [[ "$(node -v | cut -d. -f1 | tr -d v)" -lt 2
   apt-get install -y nodejs
 fi
 
+AMI_PASS="$(head -c 24 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 24)"
 ARI_PASS="$(head -c 24 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 24)"
 if [[ $WITH_ASTERISK -eq 1 ]]; then
   log "Installing Asterisk"
   apt-get install -y asterisk || { echo "Asterisk package not available on this release. Re-run with --no-asterisk or install Asterisk manually."; exit 1; }
   ETC=/etc/asterisk
   ts=$(date +%s)
-  for f in pjsip.conf extensions.conf ari.conf http.conf rtp.conf; do
+  for f in pjsip.conf extensions.conf ari.conf http.conf rtp.conf manager.conf; do
     [[ -f $ETC/$f ]] && cp -n "$ETC/$f" "$ETC/$f.bak-$ts" || true
     cp "$SRC_DIR/asterisk/$f" "$ETC/$f"
   done
-  sed -i "s/^password = CHANGE_ME/password = $ARI_PASS/" $ETC/ari.conf
   sed -i "s/^;external_media_address=.*/;external_media_address=$PUBLIC_IP/; s/^;external_signaling_address=.*/;external_signaling_address=$PUBLIC_IP/" $ETC/pjsip.conf
   touch $ETC/pjsip_ipcall.conf
   # The legacy chan_sip driver (still shipped on some releases) would fight PJSIP for port 5060.
@@ -80,14 +80,27 @@ if [[ ! -f "$APP_DIR/.env" ]]; then
       echo "ARI_URL=http://127.0.0.1:8088"
       echo "ARI_USER=ipcall"
       echo "ARI_PASSWORD=$ARI_PASS"
+      echo "AMI_USER=ipcall"
+      echo "AMI_PASSWORD=$AMI_PASS"
       echo "ASTERISK_SOUNDS_DIR=/var/lib/asterisk/sounds/ipcall"
       echo "ASTERISK_PJSIP_FILE=/etc/asterisk/pjsip_ipcall.conf"
       echo "SIP_PUBLIC_HOST=${DOMAIN:-$PUBLIC_IP}"
     fi
   } > "$APP_DIR/.env"
 else
+  # Existing install: keep its passwords, add any settings introduced by newer versions.
   ARI_PASS="$(grep -oP '^ARI_PASSWORD=\K.*' "$APP_DIR/.env" || echo "$ARI_PASS")"
-  [[ $WITH_ASTERISK -eq 1 ]] && sed -i "s/^password = .*/password = $ARI_PASS/" /etc/asterisk/ari.conf
+  if grep -q '^AMI_PASSWORD=' "$APP_DIR/.env"; then
+    AMI_PASS="$(grep -oP '^AMI_PASSWORD=\K.*' "$APP_DIR/.env")"
+  elif [[ $WITH_ASTERISK -eq 1 ]]; then
+    printf 'AMI_USER=ipcall\nAMI_PASSWORD=%s\n' "$AMI_PASS" >> "$APP_DIR/.env"
+  fi
+fi
+if [[ $WITH_ASTERISK -eq 1 ]]; then
+  sed -i "s/^password = .*/password = $ARI_PASS/" /etc/asterisk/ari.conf
+  sed -i "s/^secret = .*/secret = $AMI_PASS/" /etc/asterisk/manager.conf
+  chown asterisk:asterisk /etc/asterisk/ari.conf /etc/asterisk/manager.conf
+  chmod 640 /etc/asterisk/ari.conf /etc/asterisk/manager.conf
 fi
 chmod 600 "$APP_DIR/.env"
 

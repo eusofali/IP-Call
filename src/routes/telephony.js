@@ -11,7 +11,10 @@ const genPass = () => crypto.randomBytes(9).toString('base64url');
 /** After trunk/extension changes, regenerate Asterisk config when running with Asterisk. */
 async function syncAsterisk(req) {
   if (cfg.driver !== 'asterisk' || !cfg.asterisk.pjsipFile) return;
-  try { await applyPjsip(req.app.locals.engine.driver); }
+  try {
+    await applyPjsip(req.app.locals.engine.driver);
+    req.app.locals.engine.lastSync = Date.now() - 22000; // re-check registration ~8s from now
+  }
   catch (e) { req.flash('error', 'Saved, but Asterisk reload failed: ' + e.message); }
 }
 

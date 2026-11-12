@@ -208,6 +208,12 @@ CREATE TABLE IF NOT EXISTS ticket_messages (
 );
 `);
 
+// ---- small migrations for databases created by older versions ----
+function addColumn(table, column, ddl) {
+  if (!db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${ddl}`);
+}
+addColumn('ip_numbers', 'status_detail', 'status_detail TEXT');
+
 const getSetting = (key, def = '') => {
   const r = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
   return r ? r.value : def;

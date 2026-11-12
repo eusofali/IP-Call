@@ -11,7 +11,7 @@
         <td class="mono small"><%= t.sip_server %></td><td><%= t.port %>/<%= t.transport.toUpperCase() %></td>
         <td class="small"><%= t.max_concurrent %> calls · <%= t.cps %>/s</td><td><%= t.live %></td>
         <td class="small"><%= t.last_sync ? u.fmtDate(t.last_sync) : 'never' %><span class="sub"><%= t.last_sync ? u.timeAgo(t.last_sync) : '' %></span></td>
-        <td><%- t.enabled ? u.badge(t.status) : u.badge('cancelled', 'Disabled') %></td>
+        <td><%- t.enabled ? u.badge(t.status) : u.badge('cancelled', 'Disabled') %><% if (t.enabled && t.status_detail) { %><span class="sub" style="max-width:220px;white-space:normal"><%= t.status_detail %></span><% } %></td>
         <td class="actions"><span class="icon-btns">
           <% if (!t.is_main) { %><form class="inline" method="post" action="/ip-numbers/<%= t.id %>/main"><%- include('partials/csrf') %><button class="ib g" title="Make main"><i class="bi bi-star"></i></button></form><% } %>
           <button class="ib p" title="Edit" data-dialog="trunk" data-title="Edit <%= t.number %>" data-action="/ip-numbers/<%= t.id %>/update" data-fill='<%= JSON.stringify({ number: t.number, username: t.username || "", password: "", sip_server: t.sip_server, port: t.port, transport: t.transport, max_concurrent: t.max_concurrent, cps: t.cps, enabled: t.enabled }) %>'><i class="bi bi-pencil"></i></button>

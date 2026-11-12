@@ -14,7 +14,7 @@
   <div class="card"><div class="card-head"><h2><i class="bi bi-hdd-network"></i>Trunks</h2><span class="small muted">Driver: <%= cfg.driver %></span></div>
     <% if (!trunks.length) { %><div class="empty">No IP numbers.</div><% } else { %>
     <div class="table-wrap"><table class="t light"><thead><tr><th>Number</th><th>Status</th><th>Capacity</th><th>Last sync</th></tr></thead><tbody>
-      <% trunks.forEach(t => { %><tr><td><%= t.number %></td><td><%- t.enabled ? u.badge(t.status) : u.badge('cancelled', 'Disabled') %></td>
+      <% trunks.forEach(t => { %><tr><td><%= t.number %></td><td><%- t.enabled ? u.badge(t.status) : u.badge('cancelled', 'Disabled') %><% if (t.enabled && t.status_detail && t.status !== 'connected') { %><span class="sub"><%= t.status_detail %></span><% } %></td>
         <td class="small"><%= t.max_concurrent %> concurrent · <%= t.cps %>/s</td><td class="small"><%= t.last_sync ? u.timeAgo(t.last_sync) : 'never' %></td></tr><% }) %>
     </tbody></table></div><% } %></div>
   <div class="card"><div class="card-head"><h2><i class="bi bi-exclamation-diamond"></i>Top failure reasons (24 h)</h2></div>
